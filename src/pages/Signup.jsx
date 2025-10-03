@@ -1,31 +1,38 @@
 import React, { useState } from "react";
 import { Link } from "react-router-dom";
-import { loginWithFBase } from "../Helper/firebaseHelper";
-
+import { handleSignUp } from "../Helper/firebaseHelper";
 import { useDispatch } from "react-redux";
 import { setUser } from "../redux/Slices/HomeDataSlice";
 
-function Login() {
-  const [email, setEmail] = useState("");
+function Signup() {
+  const [fName, setFName] = useState("");
+  const [lName, setLName] = useState("");
+  const [Email, setEmail] = useState("");
   const [Password, setPassword] = useState("");
 
   const dispatch = useDispatch();
 
-  const completLogin = async () => {
-    if (email == "" || Password == "") {
-      alert("Please Enter email or password");
+  const completSignUp = async () => {
+
+    // alert ("hello ")
+    if (fName == "" || lName == "" || Email == "" || Password == "") {
+      alert("Please fill all the fields");
       return;
     }
 
-    const userData = await loginWithFBase(email, Password);
+    const userData = await handleSignUp(Email, Password, {
+      role: "admin",
+      fName: fName,
+      lName: lName,
+    });
 
-    dispatch(setUser(userData));
+    if (userData?.uid) {
+      dispatch(setUser(userData));
+    }
   };
 
   return (
     <div style={{ height: 600, width: 1240, backgroundColor: "green" }}>
-      <Link to="/Login"></Link>
-      <a href="Login"></a>
       <div
         style={{
           height: 600,
@@ -46,75 +53,93 @@ function Login() {
             marginTop: -7,
           }}
         >
-          <h2 style={{ textAlign: "center", marginTop: 85 }}>Login</h2>
-          <p style={{ textAlign: "center", marginTop: -10 }}>
-            Enter your account details
-          </p>
-          <form action="login.php" method="post"></form>
+          <h2 style={{ textAlign: "center", marginTop: 85 }}>
+            Create new account
+          </h2>
           <input
-            onChange={(e) => setEmail(e.target.value)}
+            onChange={(e) => setFName(e.target.value)}
             type="text"
-            placeholder="Username"
+            placeholder="First Name"
             style={{
-              padding: "10",
-              width: 200,
-              boarderadius: 5,
+              padding: "10px",
+              width: 93,
+              borderRadius: 5,
+              border: "1px solid #ddd",
               height: 25,
-              marginLeft: 37,
+              marginTop: 13,
+              marginLeft: 39,
             }}
           />
           <input
-             onChange={(e) => setPassword(e.target.value)}
+            onChange={(e) => setLName(e.target.value)}
             type="text"
+            placeholder="Last Name"
+            style={{
+              padding: "10px",
+              width: 93,
+              borderRadius: 5,
+              border: "1px solid #ddd",
+              height: 25,
+              marginTop: 13,
+              marginLeft: 5,
+            }}
+          />
+          <input
+            onChange={(e) => setEmail(e.target.value)}
+            type="email"
+            placeholder="Email"
+            style={{
+              padding: "10px",
+              width: 200,
+              borderRadius: 5,
+              border: "1px solid #ddd",
+              height: 25,
+              marginLeft: 37,
+              marginTop: 13,
+            }}
+          />
+          <input
+            onChange={(e) => setPassword(e.target.value)}
+            type="password"
             placeholder="Password"
             style={{
-              padding: "10",
+              padding: "10px",
               width: 200,
-              boarderadius: 5,
+              borderRadius: 5,
+              border: "1px solid #ddd",
               height: 25,
               marginTop: 13,
               marginLeft: 37,
             }}
           />
-          <div
-            style={{
-              float: "right",
-              marginRight: 143,
-              marginTop: -16,
-              display: "flex",
-              alignItems: "center",
-              color: "black",
-              cursor: "pointer",
-              justifyContent: "center",
-            }}
-          >
-            <h5>Forgot Password</h5>
-          </div>
+          {/* <div style={{ float: 'right', marginRight: 143, marginTop:-16,display: 'flex', alignItems: 'center', color: "black", cursor: 'pointer', justifyContent: 'center' }}>
+                        <h5 >Forgot Password</h5></div> */}
           <button
-
-           onClick={completLogin}
+            onClick={completSignUp}
             style={{
               width: 200,
               height: 40,
               backgroundColor: "green",
               position: "absolute",
-              marginTop: 85,
-              marginLeft: -202,
-              padding: "10px",
+              marginTop: 70,
+              marginLeft: -206,
+              padding: "0px 10px",
               borderRadius: 5,
+              border: "none",
+              justifyContent: "center",
               textAlign: "center",
               color: "white",
               cursor: "pointer",
+              fontSize: "14px",
             }}
           >
-            {" "}
-            Login
-          </button>
+            Create Account
+          </button>{" "}
           <div
             style={{
               float: "right",
               marginRight: 123,
-              marginTop: 102,
+              marginTop: 123,
               display: "flex",
               alignItems: "center",
               color: "black",
@@ -122,16 +147,15 @@ function Login() {
               justifyContent: "center",
             }}
           >
-            <h5>Don't have an account</h5>
+            <h5>Already have an account</h5>
           </div>
-
           <button
             style={{
               width: 66,
               height: 23,
               backgroundColor: "green",
               position: "absolute",
-              marginTop: 162,
+              marginTop: 141,
               marginLeft: 170,
               padding: "10px",
               textAlign: "center",
@@ -141,13 +165,14 @@ function Login() {
               borderRadius: 5,
               color: "white",
               cursor: "pointer",
+              border: "none",
             }}
           >
             <Link
-              to="/Signup"
-              style={{ textDecoration: "none", color: "white" }}
+              to="/"
+              style={{ textDecoration: "none", color: "white", fontSize: "12px" }}
             >
-              Signup
+              Sign In
             </Link>
           </button>
         </div>
@@ -164,6 +189,7 @@ function Login() {
       >
         <img
           src="https://media.giphy.com/media/IoP0PvbbSWGAM/giphy.gif"
+          alt="Signup Animation"
           style={{
             width: "100%",
             height: "100%",
@@ -176,8 +202,4 @@ function Login() {
   );
 }
 
-export default Login;
-
-
-
-
+export default Signup;

@@ -148,9 +148,7 @@ export default function Home() {
           <h4>Sales Chart</h4>
           <p style={{ color: "grey" }}>Sales Chat will be implemented here</p>
 
-
-                <div style={{ width: 200 }}>
-        <PieChart
+             <PieChart
           segmentsStyle={{ width: 100 }}
           data={[
             { title: "One", value: 10, color: "#E38627" },
@@ -158,7 +156,6 @@ export default function Home() {
             { title: "Three", value: 20, color: "#6A2135" },
           ]}
         />
-      </div>
         </div>
         <div
           style={{
@@ -190,7 +187,9 @@ export default function Home() {
           </span>
         </div>
       </span>
-
+      <div style={{ width: 300 }}>
+     
+      </div>
       ;{/* <img src="{img}" alt="pic" /> */}
     </div>
   );
