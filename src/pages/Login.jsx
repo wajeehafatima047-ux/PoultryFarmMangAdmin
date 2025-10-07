@@ -2,27 +2,30 @@ import React, { useState } from "react";
 import { Link, useNavigate } from "react-router-dom";
 import { loginWithFBase } from "../Helper/firebaseHelper";
 import { getDataById } from "../Helper/firebaseHelper";
-
 import { useDispatch } from "react-redux";
 import { setUser } from "../redux/Slices/HomeDataSlice";
 
 function Login() {
   const [email, setEmail] = useState("");
-  const [Password, setPassword] = useState("");
+  const [password, setPassword] = useState("");
+  const [showPassword, setShowPassword] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   const dispatch = useDispatch();
   const navigate = useNavigate();
 
   const completLogin = async () => {
     // Check if email and password are filled
-    if (email == "" || Password == "") {
-      alert("Please Enter email or password");
+    if (email === "" || password === "") {
+      alert("Please enter email and password");
       return;
     }
 
+    setIsLoading(true);
+
     try {
       // Login with Firebase Authentication
-      const userData = await loginWithFBase(email, Password);
+      const userData = await loginWithFBase(email, password);
 
       // Get additional user data from Firestore
       const userDetails = await getDataById("users", userData.uid);
@@ -51,158 +54,252 @@ function Login() {
       } else {
         alert("Login failed: " + error.message);
       }
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleKeyPress = (e) => {
+    if (e.key === 'Enter') {
+      completLogin();
     }
   };
 
   return (
-    <div style={{ height: 600, width: 1240, backgroundColor: "green" }}>
-      <Link to="/Login"></Link>
-      <a href="Login"></a>
-      <div
-        style={{
-          height: 600,
-          width: 500,
-          backgroundColor: "#D9D9D9",
-          display: "flex",
-          justifyContent: "center",
-          alignItems: "center",
-        }}
-      >
-        <div
-          style={{
-            height: 471,
-            width: 277,
-            backgroundColor: "white",
-            boxShadow: "0 4px 20px rgba(0, 0, 0, 0.5)",
-            marginLeft: 221,
-            marginTop: -7,
-          }}
-        >
-          <h2 style={{ textAlign: "center", marginTop: 85 }}>Login</h2>
-          <p style={{ textAlign: "center", marginTop: -10 }}>
-            Enter your account details
-          </p>
-          <form action="login.php" method="post"></form>
-          <input
-            onChange={(e) => setEmail(e.target.value)}
-            type="text"
-            placeholder="Username"
-            style={{
-              padding: "10",
-              width: 200,
-              boarderadius: 5,
-              height: 25,
-              marginLeft: 37,
-            }}
-          />
-          <input
-             onChange={(e) => setPassword(e.target.value)}
-            type="password"
-            placeholder="Password"
-            style={{
-              padding: "10",
-              width: 200,
-              borderRadius: 5,
-              height: 25,
-              marginTop: 13,
-              marginLeft: 37,
-            }}
-          />
-          <div
-            style={{
-              float: "right",
-              marginRight: 143,
-              marginTop: -16,
-              display: "flex",
-              alignItems: "center",
-              color: "black",
-              cursor: "pointer",
-              justifyContent: "center",
-            }}
-          >
-            <h5>Forgot Password</h5>
+    <div style={{
+      minHeight: '100vh',
+      display: 'flex',
+      alignItems: 'center',
+      justifyContent: 'center',
+      background: '#f5f5f5',
+      padding: '20px',
+      fontFamily: "'Inter', 'Segoe UI', sans-serif"
+    }}>
+      <div style={{
+        display: 'flex',
+        maxWidth: '1000px',
+        width: '100%',
+        backgroundColor: 'white',
+        borderRadius: '20px',
+        boxShadow: '0 10px 40px rgba(0, 0, 0, 0.1)',
+        overflow: 'hidden'
+      }}>
+        {/* Left Side - Login Form */}
+        <div style={{
+          flex: 1,
+          padding: '60px 50px',
+          display: 'flex',
+          flexDirection: 'column',
+          justifyContent: 'center'
+        }}>
+          {/* Logo/Brand */}
+          <div style={{ marginBottom: '40px' }}>
+            <h1 style={{
+              fontSize: '32px',
+              fontWeight: '700',
+              color: '#1a202c',
+              marginBottom: '8px'
+            }}>
+              Welcome Back! 👋
+            </h1>
+            <p style={{
+              fontSize: '16px',
+              color: '#718096',
+              margin: 0
+            }}>
+              Login to manage your poultry farm
+            </p>
           </div>
-          <button
 
-           onClick={completLogin}
+          {/* Email Input */}
+          <div style={{ marginBottom: '24px' }}>
+            <label style={{
+              display: 'block',
+              fontSize: '14px',
+              fontWeight: '600',
+              color: '#2d3748',
+              marginBottom: '8px'
+            }}>
+              Email Address
+            </label>
+            <input
+              type="email"
+              value={email}
+              onChange={(e) => setEmail(e.target.value)}
+              onKeyPress={handleKeyPress}
+              placeholder="Enter your email"
+              style={{
+                width: '100%',
+                padding: '14px 16px',
+                fontSize: '15px',
+                border: '2px solid #e2e8f0',
+                borderRadius: '10px',
+                outline: 'none',
+                transition: 'all 0.3s',
+                boxSizing: 'border-box'
+              }}
+              onFocus={(e) => e.target.style.borderColor = '#6b7280'}
+              onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+            />
+          </div>
+
+          {/* Password Input */}
+          <div style={{ marginBottom: '16px' }}>
+            <label style={{
+              display: 'block',
+              fontSize: '14px',
+              fontWeight: '600',
+              color: '#2d3748',
+              marginBottom: '8px'
+            }}>
+              Password
+            </label>
+            <div style={{ position: 'relative' }}>
+              <input
+                type={showPassword ? "text" : "password"}
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                onKeyPress={handleKeyPress}
+                placeholder="Enter your password"
+                style={{
+                  width: '100%',
+                  padding: '14px 16px',
+                  paddingRight: '50px',
+                  fontSize: '15px',
+                  border: '2px solid #e2e8f0',
+                  borderRadius: '10px',
+                  outline: 'none',
+                  transition: 'all 0.3s',
+                  boxSizing: 'border-box'
+                }}
+                onFocus={(e) => e.target.style.borderColor = '#6b7280'}
+                onBlur={(e) => e.target.style.borderColor = '#e2e8f0'}
+              />
+              <button
+                type="button"
+                onClick={() => setShowPassword(!showPassword)}
+                style={{
+                  position: 'absolute',
+                  right: '12px',
+                  top: '50%',
+                  transform: 'translateY(-50%)',
+                  background: 'none',
+                  border: 'none',
+                  cursor: 'pointer',
+                  fontSize: '20px',
+                  color: '#718096'
+                }}
+              >
+                {showPassword ? '👁️' : '👁️‍🗨️'}
+              </button>
+            </div>
+          </div>
+
+          {/* Forgot Password */}
+          <div style={{
+            textAlign: 'right',
+            marginBottom: '28px'
+          }}>
+            <a href="#" style={{
+              fontSize: '14px',
+              color: '#6b7280',
+              textDecoration: 'none',
+              fontWeight: '500'
+            }}>
+              Forgot Password?
+            </a>
+          </div>
+
+          {/* Login Button */}
+          <button
+            onClick={completLogin}
+            disabled={isLoading}
             style={{
-              width: 200,
-              height: 40,
-              backgroundColor: "green",
-              position: "absolute",
-              marginTop: 85,
-              marginLeft: -202,
-              padding: "10px",
-              borderRadius: 5,
-              textAlign: "center",
-              color: "white",
-              cursor: "pointer",
+              width: '100%',
+              padding: '16px',
+              fontSize: '16px',
+              fontWeight: '600',
+              color: 'white',
+              background: isLoading ? '#d1d5db' : '#4b5563',
+              border: 'none',
+              borderRadius: '10px',
+              cursor: isLoading ? 'not-allowed' : 'pointer',
+              transition: 'all 0.3s',
+              boxShadow: '0 4px 15px rgba(0, 0, 0, 0.1)',
+              marginBottom: '24px'
+            }}
+            onMouseOver={(e) => {
+              if (!isLoading) {
+                e.target.style.transform = 'translateY(-2px)';
+                e.target.style.boxShadow = '0 6px 20px rgba(0, 0, 0, 0.15)';
+                e.target.style.background = '#374151';
+              }
+            }}
+            onMouseOut={(e) => {
+              e.target.style.transform = 'translateY(0)';
+              e.target.style.boxShadow = '0 4px 15px rgba(0, 0, 0, 0.1)';
+              e.target.style.background = '#4b5563';
             }}
           >
-            {" "}
-            Login
+            {isLoading ? 'Logging in...' : 'Login'}
           </button>
-          <div
-            style={{
-              float: "right",
-              marginRight: 123,
-              marginTop: 102,
-              display: "flex",
-              alignItems: "center",
-              color: "black",
-              cursor: "pointer",
-              justifyContent: "center",
-            }}
-          >
-            <h5>Don't have an account</h5>
-          </div>
 
-          <button
-            style={{
-              width: 66,
-              height: 23,
-              backgroundColor: "green",
-              position: "absolute",
-              marginTop: 162,
-              marginLeft: 170,
-              padding: "10px",
-              textAlign: "center",
-              display: "flex",
-              alignContent: "center",
-              alignItems: "center",
-              borderRadius: 5,
-              color: "white",
-              cursor: "pointer",
-            }}
-          >
-            <Link
-              to="/Signup"
-              style={{ textDecoration: "none", color: "white" }}
-            >
-              Signup
+          {/* Sign Up Link */}
+          <div style={{
+            textAlign: 'center',
+            fontSize: '15px',
+            color: '#718096'
+          }}>
+            Don't have an account?{' '}
+            <Link to="/Signup" style={{
+              color: '#4b5563',
+              textDecoration: 'none',
+              fontWeight: '600'
+            }}>
+              Sign Up
             </Link>
-          </button>
+          </div>
         </div>
-      </div>
-      <div
-        style={{
-          height: 432,
-          width: 611,
-          backgroundColor: "rgb(83 149 18)",
-          marginLeft: 500,
-          marginTop: -538,
-          padding: "20px",
-        }}
-      >
-        <img
-          src="https://media.giphy.com/media/IoP0PvbbSWGAM/giphy.gif"
-          style={{
-            width: "100%",
-            height: "100%",
-            objectFit: "cover",
-            borderRadius: "12px",
-          }}
-        />
+
+        {/* Right Side - Image/Illustration */}
+        <div style={{
+          flex: 1,
+          background: '#e5e7eb',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '60px 40px',
+          position: 'relative'
+        }}>
+          <div style={{
+            textAlign: 'center',
+            color: '#374151'
+          }}>
+            <div style={{
+              fontSize: '80px',
+              marginBottom: '30px'
+            }}>
+              🐔
+            </div>
+            <h2 style={{
+              fontSize: '28px',
+              fontWeight: '700',
+              marginBottom: '16px',
+              lineHeight: '1.3'
+            }}>
+              Poultry Farm Management
+            </h2>
+            <p style={{
+              fontSize: '16px',
+              opacity: 0.9,
+              lineHeight: '1.6',
+              maxWidth: '350px',
+              margin: '0 auto'
+            }}>
+              Manage your farm efficiently with our comprehensive management system. Track inventory, sales, employees, and more!
+            </p>
+          </div>
+        </div>
       </div>
     </div>
   );
