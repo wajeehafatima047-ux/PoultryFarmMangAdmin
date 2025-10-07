@@ -1,5 +1,5 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { handleSignUp } from "../Helper/firebaseHelper";
 import { useDispatch } from "react-redux";
 import { setUser } from "../redux/Slices/HomeDataSlice";
@@ -11,23 +11,30 @@ function Signup() {
   const [Password, setPassword] = useState("");
 
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const completSignUp = async () => {
-
     // alert ("hello ")
     if (fName == "" || lName == "" || Email == "" || Password == "") {
       alert("Please fill all the fields");
       return;
     }
 
-    const userData = await handleSignUp(Email, Password, {
-      role: "admin",
-      fName: fName,
-      lName: lName,
-    });
+    try {
+      const userData = await handleSignUp(Email, Password, {
+        role: "admin",
+        fName: fName,
+        lName: lName,
+      });
 
-    if (userData?.uid) {
-      dispatch(setUser(userData));
+      if (userData?.uid) {
+        dispatch(setUser(userData));
+        // Navigate to dashboard (Home) after successful signup
+        navigate("/");
+      }
+    } catch (error) {
+      console.error("Signup error:", error);
+      alert("Signup failed: " + error.message);
     }
   };
 

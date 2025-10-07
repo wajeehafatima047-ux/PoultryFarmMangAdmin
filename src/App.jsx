@@ -136,6 +136,10 @@
 
 // export default App;
 
+
+
+
+
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import Sidebar from "./components/sidebar";
@@ -157,11 +161,11 @@ import Employee from "./pages/Employee";
 import ChickenPurchaseForm from "./pages/ChickenPurchaseForm";
 
 import EmployeeForm from "./pages/EmployeeForm";
+import EmployeeAttendanceForm from "./pages/EmployeeAttendanceForm";
 
 // import EmployeePaymentForm from "./pages/EmployeePaymentForm "
 //
 
-import EmployeeAttendanceForm from "./pages/EmployeeAttendanceForm";
 import EmployeePaymentForm from "./pages/EmployeePaymentForm";
 export default function App() {
   // get user from redux store
@@ -173,56 +177,6 @@ export default function App() {
         <>
           <Sidebar />
           <Routes>
-            {/* <Route path="/" element={<Home />} />
-            <Route path="/orders" element={<Orders />} />
-            <Route path="/Financials" element={<Financials />} />
-            <Route path="/Payments" element={<Payments />} />
-            <Route path="/Inventory" element={<Inventory />} />
-            <Route path="/Employee" element={<Employee />} />
-            <Route path="/ChickenSales" element={<ChickenSales />} />
-            <Route path="/Setting" element={<Setting />} /> */}
-
-            <Route
-              path="/EmployeePaymentForm"
-              element={<EmployeePaymentForm />}
-            />
-
-            <Route path="/EmployeeForm" element={<EmployeeForm />} />
-
-            <Route
-              path="/EmployeeAttendanceForm"
-              element={<EmployeeAttendanceForm />}
-            />
-
-            <Route
-              path="/ChickenPurchaseForm"
-              element={<ChickenPurchaseForm />}
-            />
-          </Routes>
-        </>
-      ) : (
-        <Routes>
-          <Route path="/" element={<Login />} />
-
-            <Route
-              path="/ChickenPurchaseForm"
-              element={<ChickenPurchaseForm />}
-            />
-
-
-
-          <Route path="/Signup" element={<Signup />} />
-
- 
-
-
-
-
-          
-
-
-
-
             <Route path="/" element={<Home />} />
             <Route path="/Orders" element={<Orders />} />
             <Route path="/Financials" element={<Financials />} />
@@ -230,22 +184,22 @@ export default function App() {
             <Route path="/Inventory" element={<Inventory />} />
             <Route path="/Employee" element={<Employee />} />
             <Route path="/ChickenSales" element={<ChickenSales />} />
-            <Route path="/Setting" element={<Setting />} /> 
+            <Route path="/Setting" element={<Setting />} />
+            <Route path="/EmployeeForm" element={<EmployeeForm />} />
+            <Route path="/EmployeePaymentForm" element={<EmployeePaymentForm />} />
+            <Route path="/ChickenPurchaseForm" element={<ChickenPurchaseForm />} />
+          </Routes>
+        </>
+      ) : (
+        <Routes>
+          <Route path="/" element={<Login />} />
+          <Route path="/Signup" element={<Signup />} />
+          <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-
-
-
-
-
-
-
-
-
       )}
     </BrowserRouter>
   );
 }
-
 // if(x==2){
 //   console.log("x is even");
 

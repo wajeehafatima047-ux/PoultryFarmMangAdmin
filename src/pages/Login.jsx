@@ -1,6 +1,7 @@
 import React, { useState } from "react";
-import { Link } from "react-router-dom";
+import { Link, useNavigate } from "react-router-dom";
 import { loginWithFBase } from "../Helper/firebaseHelper";
+import { getDataById } from "../Helper/firebaseHelper";
 
 import { useDispatch } from "react-redux";
 import { setUser } from "../redux/Slices/HomeDataSlice";
@@ -10,16 +11,47 @@ function Login() {
   const [Password, setPassword] = useState("");
 
   const dispatch = useDispatch();
+  const navigate = useNavigate();
 
   const completLogin = async () => {
+    // Check if email and password are filled
     if (email == "" || Password == "") {
       alert("Please Enter email or password");
       return;
     }
 
-    const userData = await loginWithFBase(email, Password);
+    try {
+      // Login with Firebase Authentication
+      const userData = await loginWithFBase(email, Password);
 
-    dispatch(setUser(userData));
+      // Get additional user data from Firestore
+      const userDetails = await getDataById("users", userData.uid);
+
+      // Combine authentication data with Firestore data
+      const completeUserData = {
+        uid: userData.uid,
+        email: userData.email,
+        ...userDetails
+      };
+
+      // Save user data to Redux store
+      dispatch(setUser(completeUserData));
+
+      // Navigate to home page after successful login
+      navigate("/");
+    } catch (error) {
+      console.error("Login error:", error);
+      // Show user-friendly error messages
+      if (error.code === "auth/user-not-found") {
+        alert("No account found with this email. Please sign up first.");
+      } else if (error.code === "auth/wrong-password") {
+        alert("Incorrect password. Please try again.");
+      } else if (error.code === "auth/invalid-email") {
+        alert("Invalid email address.");
+      } else {
+        alert("Login failed: " + error.message);
+      }
+    }
   };
 
   return (
@@ -65,12 +97,12 @@ function Login() {
           />
           <input
              onChange={(e) => setPassword(e.target.value)}
-            type="text"
+            type="password"
             placeholder="Password"
             style={{
               padding: "10",
               width: 200,
-              boarderadius: 5,
+              borderRadius: 5,
               height: 25,
               marginTop: 13,
               marginLeft: 37,

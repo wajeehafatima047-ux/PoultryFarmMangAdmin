@@ -8,7 +8,7 @@ import HomeDataSlice from "../Slices/HomeDataSlice.js";
 const persistConfig = {
   key: "root",
   storage: storage,
-  blacklist:["home"] // Add slices you don't want to persist here
+  blacklist:[] // Add slices you don't want to persist here
 };
 
 // Combine reducers

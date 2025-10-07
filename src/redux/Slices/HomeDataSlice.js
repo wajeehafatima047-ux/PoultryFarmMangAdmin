@@ -24,7 +24,12 @@ const homeSlice = createSlice({
         setLoading: (state, action) => {
             state.loading = action.payload
         },
-       
+        logout: (state) => {
+            state.user = {};
+            state.name = "";
+            state.role = "";
+            state.loading = false;
+        },
 
 
 
@@ -34,7 +39,8 @@ const homeSlice = createSlice({
 export const {
     setUser,
     setName,
-    setRole
+    setRole,
+    logout
 
 } = homeSlice.actions;
 
