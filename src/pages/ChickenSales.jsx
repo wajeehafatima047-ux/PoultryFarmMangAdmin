@@ -1,5 +1,7 @@
-import React from "react";
+import React, { useState, useEffect } from "react";
 import { HiOutlineCube } from "react-icons/hi";
+import { collection, onSnapshot, query } from 'firebase/firestore';
+import { db } from '../../firebase';
 
 import {
   LineChart,
@@ -43,6 +45,108 @@ const data = [
 
 
 function ChickenSales() {
+  const [salesData, setSalesData] = useState([]);
+  const [loading, setLoading] = useState(true);
+  const [stats, setStats] = useState({
+    totalSales: 0,
+    totalRevenue: 0,
+    averagePrice: 0
+  });
+
+  useEffect(() => {
+    // Real-time listener for chicken sales
+    const salesQuery = query(collection(db, 'chickenSales'));
+    const unsubscribe = onSnapshot(salesQuery, (snapshot) => {
+      const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setSalesData(data);
+
+      // Calculate statistics
+      const totalSales = data.reduce((sum, sale) => sum + (parseInt(sale.quantity) || 0), 0);
+      const totalRevenue = data.reduce((sum, sale) => sum + (parseFloat(sale.totalPrice) || 0), 0);
+      const averagePrice = totalSales > 0 ? totalRevenue / totalSales : 0;
+
+      setStats({
+        totalSales,
+        totalRevenue,
+        averagePrice
+      });
+
+      setLoading(false);
+    }, (error) => {
+      console.error('Error fetching chicken sales:', error);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
+
+  // Group sales by month for chart
+  const getMonthlyData = () => {
+    const monthlyData = {};
+    
+    salesData.forEach(sale => {
+      if (sale.date) {
+        const date = new Date(sale.date);
+        const monthKey = date.toLocaleString('default', { month: 'short' });
+        
+        if (!monthlyData[monthKey]) {
+          monthlyData[monthKey] = { name: monthKey, sales: 0, revenue: 0 };
+        }
+        
+        monthlyData[monthKey].sales += parseInt(sale.quantity) || 0;
+        monthlyData[monthKey].revenue += parseFloat(sale.totalPrice) || 0;
+      }
+    });
+
+    return Object.values(monthlyData);
+  };
+
+  // Get customer data for chart
+  const getCustomerData = () => {
+    const customerData = {};
+    
+    salesData.forEach(sale => {
+      const customer = sale.customer || 'Unknown';
+      if (!customerData[customer]) {
+        customerData[customer] = 0;
+      }
+      customerData[customer] += parseInt(sale.quantity) || 0;
+    });
+
+    // Get top 5 customers
+    return Object.entries(customerData)
+      .sort((a, b) => b[1] - a[1])
+      .slice(0, 5)
+      .map(([customer, quantity]) => ({ customer, quantity }));
+  };
+
+  const chartData = getMonthlyData();
+  const customerChartData = getCustomerData();
+
+  const barOptions = {
+    chart: {
+      id: 'customer-sales',
+      type: 'bar'
+    },
+    xaxis: {
+      categories: customerChartData.map(c => c.customer)
+    },
+    title: {
+      text: 'Top Customers by Sales Volume'
+    }
+  };
+
+  const barSeries = [{
+    name: 'Chickens Sold',
+    data: customerChartData.map(c => c.quantity)
+  }];
+
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD'
+    }).format(amount);
+  };
   
   return (
     <div>
@@ -55,49 +159,60 @@ function ChickenSales() {
 
       <h3>Chicken Sales</h3>
 
-      <span style={{ display: "flex" }}>
-        <div
-          style={{
-            width: 350,
-            height: 150,
-            backgroundColor: "whitesmoke",
-            borderRadius: "10px",
-            margin: "10px",
-          }}
-        >
-          <p style={{ color: "grey" }}>Total Sales</p>
-          <h3>650 chickens</h3>
-          <p style={{ color: "grey" }}>+12% from last month</p>
+      {loading ? (
+        <div style={{ textAlign: "center", padding: "20px" }}>
+          <p>Loading sales data...</p>
         </div>
+      ) : (
+        <>
+          <span style={{ display: "flex" }}>
+            <div
+              style={{
+                width: 350,
+                height: 150,
+                backgroundColor: "whitesmoke",
+                borderRadius: "10px",
+                margin: "10px",
+                padding: "15px"
+              }}
+            >
+              <p style={{ color: "grey", margin: "0 0 10px 0" }}>Total Sales</p>
+              <h3 style={{ margin: "0 0 10px 0" }}>{stats.totalSales} chickens</h3>
+              <p style={{ color: "grey", fontSize: "12px", margin: 0 }}>Live from database</p>
+            </div>
 
-        <div
-          style={{
-            width: 350,
-            height: 150,
-            backgroundColor: "whitesmoke",
-            borderRadius: "10px",
-            margin: "10px",
-          }}
-        >
-          <p style={{ color: "grey" }}>Total Sales</p>
-          <h3>650 chickens</h3>
-          <p style={{ color: "grey" }}>+12% from last month</p>
-        </div>
+            <div
+              style={{
+                width: 350,
+                height: 150,
+                backgroundColor: "whitesmoke",
+                borderRadius: "10px",
+                margin: "10px",
+                padding: "15px"
+              }}
+            >
+              <p style={{ color: "grey", margin: "0 0 10px 0" }}>Average Price</p>
+              <h3 style={{ margin: "0 0 10px 0" }}>{formatCurrency(stats.averagePrice)}/chicken</h3>
+              <p style={{ color: "grey", fontSize: "12px", margin: 0 }}>Per unit price</p>
+            </div>
 
-        <div
-          style={{
-            width: 350,
-            height: 150,
-            backgroundColor: "whitesmoke",
-            borderRadius: "10px",
-            margin: "10px",
-          }}
-        >
-          <p style={{ color: "grey" }}>Total Revenue</p>
-          <h3>$3,555</h3>
-          <p style={{ color: "grey" }}>+8% from last month</p>
-        </div>
-      </span>
+            <div
+              style={{
+                width: 350,
+                height: 150,
+                backgroundColor: "whitesmoke",
+                borderRadius: "10px",
+                margin: "10px",
+                padding: "15px"
+              }}
+            >
+              <p style={{ color: "grey", margin: "0 0 10px 0" }}>Total Revenue</p>
+              <h3 style={{ margin: "0 0 10px 0" }}>{formatCurrency(stats.totalRevenue)}</h3>
+              <p style={{ color: "grey", fontSize: "12px", margin: 0 }}>Total earnings</p>
+            </div>
+          </span>
+        </>
+      )}
 
       <span style={{ display: "flex" }}>
         <div
@@ -107,24 +222,31 @@ function ChickenSales() {
             backgroundColor: "whitesmoke",
             borderRadius: "10px",
             margin: "10px",
+            padding: "15px"
           }}
         >
-          <h4> Sales & Forecast</h4>
-          <p style={{ color: "grey" }}>
-            Year-to-date chicken sales with forecast
+          <h4 style={{ margin: "0 0 10px 0" }}>Sales Trend</h4>
+          <p style={{ color: "grey", margin: "0 0 15px 0" }}>
+            Monthly chicken sales overview
           </p>
 
-          <ResponsiveContainer width="100%" height={200}>
-            <LineChart data={data}>
-              <CartesianGrid stroke="#ccc" />
-              <XAxis dataKey="name" />
-              <YAxis />
-              <Tooltip />
-              <Legend />
-              <Line type="monotone" dataKey="sales2024" stroke="#8884d8" />
-              <Line type="monotone" dataKey="sales2025" stroke="#82ca9d" />
-            </LineChart>
-          </ResponsiveContainer>
+          {chartData.length === 0 ? (
+            <p style={{ color: "grey", textAlign: "center", padding: "40px" }}>
+              No sales data available for chart
+            </p>
+          ) : (
+            <ResponsiveContainer width="100%" height={250}>
+              <LineChart data={chartData}>
+                <CartesianGrid stroke="#ccc" />
+                <XAxis dataKey="name" />
+                <YAxis />
+                <Tooltip />
+                <Legend />
+                <Line type="monotone" dataKey="sales" stroke="#8884d8" name="Chickens Sold" />
+                <Line type="monotone" dataKey="revenue" stroke="#82ca9d" name="Revenue ($)" />
+              </LineChart>
+            </ResponsiveContainer>
+          )}
         </div>
 
         <div
@@ -134,14 +256,19 @@ function ChickenSales() {
             backgroundColor: "whitesmoke",
             borderRadius: "10px",
             margin: "10px",
+            padding: "15px"
           }}
         >
-          <h4>Customer Analysis</h4>
-          <p style={{ color: "grey" }}>top customers by sales volume</p>
+          <h4 style={{ margin: "0 0 10px 0" }}>Customer Analysis</h4>
+          <p style={{ color: "grey", margin: "0 0 15px 0" }}>Top customers by sales volume</p>
 
-
-            <Chart options={optionOfBAr} series={seriesOfBar} type="bar" width="100%" height={250} />
-                         
+          {customerChartData.length === 0 ? (
+            <p style={{ color: "grey", textAlign: "center", padding: "40px" }}>
+              No customer data available
+            </p>
+          ) : (
+            <Chart options={barOptions} series={barSeries} type="bar" width="100%" height={250} />
+          )}
         </div>
       </span>
     </div>

@@ -1,7 +1,9 @@
 import React, { useState, useEffect } from "react";
 import { HiOutlineCube } from "react-icons/hi";
 import { FiPlus, FiEdit, FiTrash2, FiSearch, FiFileText } from "react-icons/fi";
-import { getAllData, deleteData } from "../Helper/firebaseHelper";
+import { collection, onSnapshot, query } from 'firebase/firestore';
+import { db } from '../../firebase';
+import { deleteData } from "../Helper/firebaseHelper";
 import PaymentForm from "./PaymentForm";
 
 function Payments() {
@@ -14,20 +16,19 @@ function Payments() {
   const [dateFilter, setDateFilter] = useState('');
 
   useEffect(() => {
-    loadPayments();
-  }, []);
-
-  const loadPayments = async () => {
-    try {
-      setLoading(true);
-      const paymentsData = await getAllData('payments');
-      setPayments(paymentsData || []);
-    } catch (error) {
-      console.error('Error loading payments:', error);
-    } finally {
+    // Real-time listener for payments
+    const paymentsQuery = query(collection(db, 'payments'));
+    const unsubscribe = onSnapshot(paymentsQuery, (snapshot) => {
+      const paymentsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+      setPayments(paymentsData);
       setLoading(false);
-    }
-  };
+    }, (error) => {
+      console.error('Error loading payments:', error);
+      setLoading(false);
+    });
+
+    return () => unsubscribe();
+  }, []);
 
   const handleAddPayment = () => {
     setEditingPayment(null);
@@ -43,7 +44,6 @@ function Payments() {
     if (window.confirm('Are you sure you want to delete this payment?')) {
       try {
         await deleteData('payments', paymentId);
-        loadPayments();
       } catch (error) {
         console.error('Error deleting payment:', error);
         alert('Failed to delete payment');
@@ -52,7 +52,9 @@ function Payments() {
   };
 
   const handleFormSuccess = () => {
-    loadPayments();
+    // No need to reload, real-time listener handles it
+    setShowForm(false);
+    setEditingPayment(null);
   };
 
   const handleCloseForm = () => {
