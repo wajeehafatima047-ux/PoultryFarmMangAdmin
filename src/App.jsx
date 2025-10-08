@@ -174,22 +174,24 @@ export default function App() {
   return (
     <BrowserRouter>
       {user?.uid ? (
-        <>
+        <div style={{ display: "flex", height: "100vh" }}>
           <Sidebar />
-          <Routes>
-            <Route path="/" element={<Home />} />
-            <Route path="/Orders" element={<Orders />} />
-            <Route path="/Financials" element={<Financials />} />
-            <Route path="/Payments" element={<Payments />} />
-            <Route path="/Inventory" element={<Inventory />} />
-            <Route path="/Employee" element={<Employee />} />
-            <Route path="/ChickenSales" element={<ChickenSales />} />
-            <Route path="/Setting" element={<Setting />} />
-            <Route path="/EmployeeForm" element={<EmployeeForm />} />
-            <Route path="/EmployeePaymentForm" element={<EmployeePaymentForm />} />
-            <Route path="/ChickenPurchaseForm" element={<ChickenPurchaseForm />} />
-          </Routes>
-        </>
+          <div style={{ flex: 1, padding: "20px", overflowY: "auto" }}>
+            <Routes>
+              <Route path="/" element={<Home />} />
+              <Route path="/Orders" element={<Orders />} />
+              <Route path="/Financials" element={<Financials />} />
+              <Route path="/Payments" element={<Payments />} />
+              <Route path="/Inventory" element={<Inventory />} />
+              <Route path="/Employee" element={<Employee />} />
+              <Route path="/ChickenSales" element={<ChickenSales />} />
+              <Route path="/Setting" element={<Setting />} />
+              <Route path="/EmployeeForm" element={<EmployeeForm />} />
+              <Route path="/EmployeePaymentForm" element={<EmployeePaymentForm />} />
+              <Route path="/ChickenPurchaseForm" element={<ChickenPurchaseForm />} />
+            </Routes>
+          </div>
+        </div>
       ) : (
         <Routes>
           <Route path="/" element={<Login />} />
