@@ -1,8 +1,8 @@
 import React, { useState, useEffect } from "react";
 import { HiOutlineCube } from "react-icons/hi2";
-import { FiPlus, FiEdit, FiTrash2, FiSearch } from "react-icons/fi";
+import { FiPlus, FiEdit, FiTrash2, FiSearch, FiFilter, FiDownload, FiPrinter } from "react-icons/fi";
 import { getAllData, deleteData } from "../Helper/firebaseHelper";
-import OrderForm from "./OrderForm";
+import OrderForm from "../components/OrderForm";
 
 function Orders() {
   const [orders, setOrders] = useState([]);
@@ -12,6 +12,7 @@ function Orders() {
   const [searchTerm, setSearchTerm] = useState('');
   const [statusFilter, setStatusFilter] = useState('All');
   const [dateFilter, setDateFilter] = useState('');
+  const [showFilters, setShowFilters] = useState(false);
 
   useEffect(() => {
     loadOrders();
@@ -29,16 +30,6 @@ function Orders() {
     }
   };
 
-  const handleAddOrder = () => {
-    setEditingOrder(null);
-    setShowForm(true);
-  };
-
-  const handleEditOrder = (order) => {
-    setEditingOrder(order.id);
-    setShowForm(true);
-  };
-
   const handleDeleteOrder = async (orderId) => {
     if (window.confirm('Are you sure you want to delete this order?')) {
       try {
@@ -51,13 +42,23 @@ function Orders() {
     }
   };
 
+  const handleAddOrder = () => {
+    setEditingOrder(null);
+    setShowForm(true);
+  };
+
   const handleFormSuccess = () => {
+    setShowForm(false);
     loadOrders();
   };
 
   const handleCloseForm = () => {
     setShowForm(false);
     setEditingOrder(null);
+  };
+
+  const handleOrderSuccess = () => {
+    loadOrders();
   };
 
   const getStatusColor = (status) => {
@@ -80,6 +81,14 @@ function Orders() {
     }
   };
 
+  // Format currency
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-PK', {
+      style: 'currency',
+      currency: 'PKR'
+    }).format(amount);
+  };
+
   const filteredOrders = orders.filter(order => {
     const matchesSearch = order.customer?.toLowerCase().includes(searchTerm.toLowerCase()) ||
                          order.orderid?.toLowerCase().includes(searchTerm.toLowerCase());
@@ -90,7 +99,27 @@ function Orders() {
   });
 
   return (
-    <div>
+    <div style={{ position: 'relative', minHeight: '100vh' }}>
+      {showForm && (
+        <div style={{
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          bottom: 0,
+          backgroundColor: 'rgba(0, 0, 0, 0.5)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          zIndex: 1000
+        }}>
+          <OrderForm
+            order={editingOrder}
+            onSuccess={handleOrderSuccess}
+            onClose={handleCloseForm}
+          />
+        </div>
+      )}
       <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
         <span>
           <HiOutlineCube />
@@ -200,9 +229,9 @@ function Orders() {
                   <th style={{ padding: "12px", textAlign: "left", borderBottom: "1px solid #dee2e6", fontWeight: "600" }}>Order ID</th>
                   <th style={{ padding: "12px", textAlign: "left", borderBottom: "1px solid #dee2e6", fontWeight: "600" }}>Customer</th>
                   <th style={{ padding: "12px", textAlign: "left", borderBottom: "1px solid #dee2e6", fontWeight: "600" }}>Date</th>
+                  <th style={{ padding: "12px", textAlign: "left", borderBottom: "1px solid #dee2e6", fontWeight: "600" }}>Chicken in Kg</th>
                   <th style={{ padding: "12px", textAlign: "left", borderBottom: "1px solid #dee2e6", fontWeight: "600" }}>Amount</th>
                   <th style={{ padding: "12px", textAlign: "left", borderBottom: "1px solid #dee2e6", fontWeight: "600" }}>Status</th>
-                  <th style={{ padding: "12px", textAlign: "left", borderBottom: "1px solid #dee2e6", fontWeight: "600" }}>Items</th>
                   <th style={{ padding: "12px", textAlign: "left", borderBottom: "1px solid #dee2e6", fontWeight: "600" }}>Payment</th>
                   <th style={{ padding: "12px", textAlign: "center", borderBottom: "1px solid #dee2e6", fontWeight: "600" }}>Actions</th>
                 </tr>
@@ -220,7 +249,8 @@ function Orders() {
                       <td style={{ padding: "12px", fontWeight: "500" }}>{order.orderid}</td>
                       <td style={{ padding: "12px" }}>{order.customer}</td>
                       <td style={{ padding: "12px" }}>{order.date}</td>
-                      <td style={{ padding: "12px", fontWeight: "500" }}>${parseFloat(order.amount || 0).toFixed(2)}</td>
+                      <td style={{ padding: "12px", fontWeight: "500", color: "#ff9800" }}>{order.chickenInKg} kg</td>
+                      <td style={{ padding: "12px", fontWeight: "500" }}>{formatCurrency(order.amount || 0)}</td>
                       <td style={{ padding: "12px" }}>
                         <span
                           style={{
@@ -235,7 +265,6 @@ function Orders() {
                           {order.status}
                         </span>
                       </td>
-                      <td style={{ padding: "12px", maxWidth: "200px", wordWrap: "break-word" }}>{order.items}</td>
                       <td style={{ padding: "12px" }}>
                         <span
                           style={{

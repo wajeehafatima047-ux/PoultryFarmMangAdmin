@@ -16,12 +16,12 @@ function Inventory() {
 
   // Form state
   const [formData, setFormData] = useState({
-    name: "",
     category: "",
     quantity: "",
+    pricePerItem: "",
+    totalCost: 0,
     supplier: "",
-    lastReStock: "",
-    status: "In Stock"
+    lastReStock: ""
   });
 
   // Load inventory from Firestore
@@ -45,7 +45,6 @@ function Inventory() {
     // Filter by search term
     if (searchTerm.trim() !== "") {
       filtered = filtered.filter(item =>
-        (item.name || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
         (item.supplier || "").toLowerCase().includes(searchTerm.toLowerCase()) ||
         (item.category || "").toLowerCase().includes(searchTerm.toLowerCase())
       );
@@ -66,7 +65,7 @@ function Inventory() {
 
   // Calculate statistics
   const totalItems = inventory.length;
-  const lowStockItems = inventory.filter(item => item.status === "Low Stock").length;
+  const totalInventoryValue = inventory.reduce((sum, item) => sum + (parseFloat(item.totalCost) || 0), 0);
   const categories = [...new Set(inventory.map(item => item.category))].length;
 
   // Handle form input changes
@@ -78,16 +77,25 @@ function Inventory() {
     }));
   };
 
+  // Calculate total cost whenever quantity or price changes
+  useEffect(() => {
+    const quantity = parseFloat(formData.quantity) || 0;
+    const pricePerItem = parseFloat(formData.pricePerItem) || 0;
+    const totalCost = quantity * pricePerItem;
+    
+    setFormData(prev => ({ ...prev, totalCost }));
+  }, [formData.quantity, formData.pricePerItem]);
+
   // Handle add new item
   const handleAddItem = () => {
     setEditingItem(null);
     setFormData({
-      name: "",
       category: "",
       quantity: "",
+      pricePerItem: "",
+      totalCost: 0,
       supplier: "",
-      lastReStock: "",
-      status: "In Stock"
+      lastReStock: ""
     });
     setShowForm(true);
   };
@@ -96,12 +104,12 @@ function Inventory() {
   const handleEditItem = (item) => {
     setEditingItem(item.id);
     setFormData({
-      name: item.name || "",
       category: item.category || "",
       quantity: item.quantity || "",
+      pricePerItem: item.pricePerItem || "",
+      totalCost: item.totalCost || 0,
       supplier: item.supplier || "",
-      lastReStock: item.lastReStock || "",
-      status: item.status || "In Stock"
+      lastReStock: item.lastReStock || ""
     });
     setShowForm(true);
   };
@@ -109,7 +117,7 @@ function Inventory() {
   // Handle delete item
   const handleDeleteItem = async (itemId) => {
     const item = inventory.find(inv => inv.id === itemId);
-    if (window.confirm(`Are you sure you want to delete ${item?.name}?`)) {
+    if (window.confirm(`Are you sure you want to delete this item?`)) {
       try {
         setLoading(true);
         await deleteData("inventory", itemId);
@@ -128,32 +136,39 @@ function Inventory() {
     e.preventDefault();
 
     // Validation
-    if (!formData.name || !formData.category || !formData.quantity || !formData.supplier || !formData.lastReStock) {
+    if (!formData.category || !formData.quantity || !formData.pricePerItem || !formData.supplier || !formData.lastReStock) {
       alert("Please fill all required fields");
       return;
     }
 
     try {
       setLoading(true);
+      const dataToSave = {
+        ...formData,
+        quantity: parseFloat(formData.quantity) || 0,
+        pricePerItem: parseFloat(formData.pricePerItem) || 0,
+        totalCost: parseFloat(formData.totalCost) || 0
+      };
+      
       if (editingItem) {
         // Update existing item
-        await updateData("inventory", editingItem, formData);
+        await updateData("inventory", editingItem, dataToSave);
       } else {
         // Add new item
         await addData("inventory", {
-          ...formData,
+          ...dataToSave,
           createdAt: new Date().toISOString()
         });
       }
       loadInventory();
       setShowForm(false);
       setFormData({
-        name: "",
         category: "",
         quantity: "",
+        pricePerItem: "",
+        totalCost: 0,
         supplier: "",
-        lastReStock: "",
-        status: "In Stock"
+        lastReStock: ""
       });
     } catch (error) {
       console.error("Error saving item:", error);
@@ -163,19 +178,17 @@ function Inventory() {
     }
   };
 
-  // Get status color
-  const getStatusColor = (status) => {
-    switch (status) {
-      case "In Stock": return "#4caf50";
-      case "Low Stock": return "#ff9800";
-      case "Out of Stock": return "#f44336";
-      default: return "#666";
-    }
-  };
-
   // Format date
   const formatDate = (dateString) => {
     return new Date(dateString).toLocaleDateString();
+  };
+
+  // Format currency
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-PK', {
+      style: 'currency',
+      currency: 'PKR'
+    }).format(amount || 0);
   };
 
   return (
@@ -221,10 +234,10 @@ function Inventory() {
         >
           <span style={{ display: "flex", gap: "10px", alignItems: "center" }}>
             <CgDanger />
-            <h4 style={{ margin: 0 }}>Low Stock Items</h4>
+            <h4 style={{ margin: 0 }}>Total Value</h4>
           </span>
-          <h3 style={{ margin: "10px 0" }}>{lowStockItems}</h3>
-          <p style={{ color: "grey", margin: 0 }}>Items need Restock</p>
+          <h3 style={{ margin: "10px 0" }}>{formatCurrency(totalInventoryValue)}</h3>
+          <p style={{ color: "grey", margin: 0 }}>Inventory Worth</p>
         </div>
 
         <div
@@ -339,12 +352,12 @@ function Inventory() {
             }}>
               <thead>
                 <tr style={{ backgroundColor: "#f8f9fa" }}>
-                  <th style={{ padding: "15px", textAlign: "left", borderBottom: "1px solid #ddd" }}>Name</th>
                   <th style={{ padding: "15px", textAlign: "left", borderBottom: "1px solid #ddd" }}>Category</th>
                   <th style={{ padding: "15px", textAlign: "left", borderBottom: "1px solid #ddd" }}>Quantity</th>
+                  <th style={{ padding: "15px", textAlign: "left", borderBottom: "1px solid #ddd" }}>Price/Item</th>
+                  <th style={{ padding: "15px", textAlign: "left", borderBottom: "1px solid #ddd" }}>Total Cost</th>
                   <th style={{ padding: "15px", textAlign: "left", borderBottom: "1px solid #ddd" }}>Supplier</th>
                   <th style={{ padding: "15px", textAlign: "left", borderBottom: "1px solid #ddd" }}>Last Restocked</th>
-                  <th style={{ padding: "15px", textAlign: "left", borderBottom: "1px solid #ddd" }}>Status</th>
                   <th style={{ padding: "15px", textAlign: "center", borderBottom: "1px solid #ddd" }}>Actions</th>
                 </tr>
               </thead>
@@ -359,9 +372,6 @@ function Inventory() {
                   filteredInventory.map((item) => (
                     <tr key={item.id} style={{ borderBottom: "1px solid #eee" }}>
                       <td style={{ padding: "15px" }}>
-                        <strong>{item.name}</strong>
-                      </td>
-                      <td style={{ padding: "15px" }}>
                         <span style={{
                           padding: "4px 8px",
                           borderRadius: "4px",
@@ -373,19 +383,10 @@ function Inventory() {
                         </span>
                       </td>
                       <td style={{ padding: "15px" }}>{item.quantity}</td>
+                      <td style={{ padding: "15px", fontWeight: "500" }}>{formatCurrency(item.pricePerItem)}</td>
+                      <td style={{ padding: "15px", fontWeight: "600", color: "#ff9800" }}>{formatCurrency(item.totalCost)}</td>
                       <td style={{ padding: "15px" }}>{item.supplier}</td>
                       <td style={{ padding: "15px" }}>{formatDate(item.lastReStock)}</td>
-                      <td style={{ padding: "15px" }}>
-                        <span style={{
-                          padding: "4px 8px",
-                          borderRadius: "4px",
-                          fontSize: "12px",
-                          backgroundColor: getStatusColor(item.status),
-                          color: "white"
-                        }}>
-                          {item.status}
-                        </span>
-                      </td>
                       <td style={{ padding: "15px", textAlign: "center" }}>
                         <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
                           <button
@@ -461,26 +462,6 @@ function Inventory() {
             <form onSubmit={handleSubmit}>
               <div style={{ marginBottom: "15px" }}>
                 <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>
-                  Name *
-                </label>
-                <input
-                  type="text"
-                  name="name"
-                  value={formData.name}
-                  onChange={handleInputChange}
-                  required
-                  style={{
-                    width: "100%",
-                    padding: "10px",
-                    borderRadius: "5px",
-                    border: "1px solid #ddd",
-                    fontSize: "14px"
-                  }}
-                />
-              </div>
-
-              <div style={{ marginBottom: "15px" }}>
-                <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>
                   Category *
                 </label>
                 <select
@@ -510,11 +491,13 @@ function Inventory() {
                   Quantity *
                 </label>
                 <input
-                  type="text"
+                  type="number"
                   name="quantity"
                   value={formData.quantity}
                   onChange={handleInputChange}
-                  placeholder="e.g., 450 kg, 100 bottles"
+                  placeholder="Enter quantity"
+                  min="0"
+                  step="0.01"
                   required
                   style={{
                     width: "100%",
@@ -522,6 +505,51 @@ function Inventory() {
                     borderRadius: "5px",
                     border: "1px solid #ddd",
                     fontSize: "14px"
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: "15px" }}>
+                <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>
+                  Price Per Item (PKR) *
+                </label>
+                <input
+                  type="number"
+                  name="pricePerItem"
+                  value={formData.pricePerItem}
+                  onChange={handleInputChange}
+                  placeholder="Enter price per item"
+                  min="0"
+                  step="0.01"
+                  required
+                  style={{
+                    width: "100%",
+                    padding: "10px",
+                    borderRadius: "5px",
+                    border: "1px solid #ddd",
+                    fontSize: "14px"
+                  }}
+                />
+              </div>
+
+              <div style={{ marginBottom: "15px" }}>
+                <label style={{ display: "block", marginBottom: "5px", fontWeight: "500" }}>
+                  Total Cost (PKR)
+                </label>
+                <input
+                  type="number"
+                  name="totalCost"
+                  value={formData.totalCost.toFixed(2)}
+                  readOnly
+                  style={{
+                    width: "100%",
+                    padding: "10px",
+                    borderRadius: "5px",
+                    border: "1px solid #ddd",
+                    fontSize: "14px",
+                    backgroundColor: "#f5f5f5",
+                    fontWeight: "bold",
+                    color: "#ff9800"
                   }}
                 />
               </div>

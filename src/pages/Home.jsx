@@ -19,9 +19,9 @@ export default function Home() {
 
   // Format currency
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-PK', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'PKR'
     }).format(amount);
   };
 
@@ -44,250 +44,289 @@ export default function Home() {
   };
 
   return (
-    <div>
-      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-        <span>
+    <div style={{ padding: "20px", maxWidth: "1400px", margin: "0 auto" }}>
+      {/* Header Section */}
+      <div style={{ display: "flex", alignItems: "center", gap: "10px", marginBottom: "20px" }}>
+        <span style={{ fontSize: "24px", color: "#007bff" }}>
           <SiNginxproxymanager />
         </span>
         <h2 style={{ margin: 0 }}>Poultry Management System</h2>
       </div>
-      <div>
-        <h3>Dashboard</h3>
-      </div>
+
+      <h3 style={{ marginBottom: "20px", color: "#333" }}>Dashboard</h3>
 
       {stats.loading ? (
-        <div style={{ textAlign: "center", padding: "20px" }}>
+        <div style={{ textAlign: "center", padding: "40px" }}>
           <p>Loading dashboard data...</p>
         </div>
       ) : (
         <>
-          <div style={{ display: "flex", gap: "30px", width: "1000px" }}>
-            <div
-              style={{
-                width: 150,
-                height: 150,
-                backgroundColor: "whitesmoke",
-                borderRadius: "10px",
-                padding: "15px"
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: "40px" }}>
-                <p style={{ color: "grey", margin: 0 }}>Total Orders</p>
-
-                <span>
+          {/* Stats Cards Section - Row 1 */}
+          <div style={{ 
+            display: "grid", 
+            gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))", 
+            gap: "20px", 
+            marginBottom: "30px" 
+          }}>
+            {/* Total Orders Card */}
+            <div style={{
+              backgroundColor: "whitesmoke",
+              borderRadius: "10px",
+              padding: "20px",
+              boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+                <p style={{ color: "grey", margin: 0, fontSize: "14px", fontWeight: "500" }}>Total Orders</p>
+                <span style={{ fontSize: "24px", color: "#007bff" }}>
                   <CiShoppingCart />
                 </span>
               </div>
-
-              <h4 style={{ margin: "10px 0" }}>{stats.totalOrders}</h4>
+              <h2 style={{ margin: "10px 0", color: "#333" }}>{stats.totalOrders}</h2>
               <p style={{ color: "grey", fontSize: "12px", margin: 0 }}>Live from database</p>
             </div>
 
-            <div
-              style={{
-                width: 150,
-                height: 150,
-                backgroundColor: "whitesmoke",
-                borderRadius: "10px",
-                padding: "15px"
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: "40px" }}>
-                <p style={{ color: "grey", margin: 0 }}>Chicken Sale</p>
-
-                <span>
+            {/* Chicken Sales Card */}
+            <div style={{
+              backgroundColor: "whitesmoke",
+              borderRadius: "10px",
+              padding: "20px",
+              boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+                <p style={{ color: "grey", margin: 0, fontSize: "14px", fontWeight: "500" }}>Chicken Sales</p>
+                <span style={{ fontSize: "24px", color: "#ff9800" }}>
                   <GiRoastChicken />
                 </span>
               </div>
-
-              <h4 style={{ margin: "10px 0" }}>{stats.chickenSales}</h4>
+              <h2 style={{ margin: "10px 0", color: "#333" }}>{stats.chickenSales}</h2>
               <p style={{ color: "grey", fontSize: "12px", margin: 0 }}>Total sold</p>
             </div>
-            <div
-              style={{
-                width: 150,
-                height: 150,
-                backgroundColor: "whitesmoke",
-                borderRadius: "10px",
-                padding: "15px"
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: "40px" }}>
-                <p style={{ color: "grey", margin: 0 }}>Active Employees</p>
 
-                <span>
+            {/* Active Employees Card */}
+            <div style={{
+              backgroundColor: "whitesmoke",
+              borderRadius: "10px",
+              padding: "20px",
+              boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+                <p style={{ color: "grey", margin: 0, fontSize: "14px", fontWeight: "500" }}>Active Employees</p>
+                <span style={{ fontSize: "24px", color: "#9c27b0" }}>
                   <FaPerson />
                 </span>
               </div>
-
-              <h4 style={{ margin: "10px 0" }}>{stats.activeEmployees}</h4>
+              <h2 style={{ margin: "10px 0", color: "#333" }}>{stats.activeEmployees}</h2>
               <p style={{ color: "grey", fontSize: "12px", margin: 0 }}>Currently active</p>
             </div>
 
-            <div
-              style={{
-                width: 150,
-                height: 150,
-                backgroundColor: "whitesmoke",
-                borderRadius: "10px",
-                padding: "15px"
-              }}
-            >
-              <div style={{ display: "flex", alignItems: "center", gap: "60px" }}>
-                <p style={{ color: "grey", margin: 0 }}>Revenue</p>
-                <span>
+            {/* Revenue Card */}
+            <div style={{
+              backgroundColor: "whitesmoke",
+              borderRadius: "10px",
+              padding: "20px",
+              boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+                <p style={{ color: "grey", margin: 0, fontSize: "14px", fontWeight: "500" }}>Revenue</p>
+                <span style={{ fontSize: "24px", color: "#4caf50" }}>
                   <GiMoneyStack />
                 </span>
               </div>
-
-              <h4 style={{ margin: "10px 0" }}>{formatCurrency(stats.revenue)}</h4>
+              <h2 style={{ margin: "10px 0", color: "#4caf50", fontSize: "20px" }}>{formatCurrency(stats.revenue)}</h2>
               <p style={{ color: "grey", fontSize: "12px", margin: 0 }}>Total revenue</p>
+            </div>
+          </div>
+
+          {/* Recent Orders and Inventory Section - Row 2 */}
+          <div style={{ 
+            display: "grid", 
+            gridTemplateColumns: "2fr 1fr", 
+            gap: "20px", 
+            marginBottom: "30px" 
+          }}>
+            {/* Recent Orders */}
+            <div style={{
+              backgroundColor: "whitesmoke",
+              borderRadius: "10px",
+              padding: "20px",
+              boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+            }}>
+              <h4 style={{ margin: "0 0 15px 0", color: "#333" }}>Recent Orders</h4>
+              {stats.recentOrders.length === 0 ? (
+                <p style={{ color: "grey", textAlign: "center", padding: "20px" }}>No recent orders found</p>
+              ) : (
+                <div style={{ overflowY: "auto", maxHeight: "300px" }}>
+                  {stats.recentOrders.map((order) => (
+                    <div
+                      key={order.id}
+                      style={{
+                        backgroundColor: "white",
+                        padding: "15px",
+                        marginBottom: "10px",
+                        borderRadius: "8px",
+                        display: "flex",
+                        justifyContent: "space-between",
+                        alignItems: "center",
+                        boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
+                      }}
+                    >
+                      <div>
+                        <strong style={{ fontSize: "14px" }}>{order.customer}</strong>
+                        <p style={{ margin: "5px 0 0 0", fontSize: "12px", color: "#666" }}>
+                          {order.orderid} • {formatDate(order.date)}
+                        </p>
+                      </div>
+                      <div style={{ textAlign: "right" }}>
+                        <strong style={{ fontSize: "14px" }}>{formatCurrency(order.amount)}</strong>
+                        <p style={{ margin: "5px 0 0 0", fontSize: "12px" }}>
+                          <span
+                            style={{
+                              backgroundColor: getStatusColor(order.status),
+                              color: "white",
+                              padding: "4px 8px",
+                              borderRadius: "12px",
+                              fontSize: "11px",
+                              fontWeight: "500"
+                            }}
+                          >
+                            {order.status}
+                          </span>
+                        </p>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+
+            {/* Inventory Overview */}
+            <div style={{
+              backgroundColor: "whitesmoke",
+              borderRadius: "10px",
+              padding: "20px",
+              boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+            }}>
+              <h4 style={{ margin: "0 0 15px 0", color: "#333" }}>Inventory Overview</h4>
+              <div style={{ 
+                backgroundColor: "white", 
+                padding: "30px", 
+                borderRadius: "8px",
+                textAlign: "center",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
+              }}>
+                <p style={{ color: "grey", margin: "0 0 15px 0", fontSize: "14px" }}>Low Stock Items</p>
+                <h1 style={{ 
+                  margin: "0 0 15px 0", 
+                  color: stats.inventoryLowStock > 0 ? "#f44336" : "#4caf50",
+                  fontSize: "48px"
+                }}>
+                  {stats.inventoryLowStock}
+                </h1>
+                <p style={{ fontSize: "13px", color: "#666", margin: 0 }}>
+                  {stats.inventoryLowStock > 0 
+                    ? "⚠️ Items need restocking" 
+                    : "✅ All items in stock"}
+                </p>
+              </div>
+            </div>
+          </div>
+
+          {/* Financial Overview and Sales Chart Section - Row 3 */}
+          <div style={{ 
+            display: "grid", 
+            gridTemplateColumns: "1fr 1fr", 
+            gap: "20px", 
+            marginBottom: "30px" 
+          }}>
+            {/* Financial Overview */}
+            <div style={{
+              backgroundColor: "whitesmoke",
+              borderRadius: "10px",
+              padding: "20px",
+              boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+            }}>
+              <h4 style={{ margin: "0 0 20px 0", color: "#333" }}>Financial Overview</h4>
+              {financials.loading ? (
+                <p style={{ color: "grey", textAlign: "center", padding: "20px" }}>Loading financial data...</p>
+              ) : (
+                <div style={{ display: "flex", flexDirection: "column", gap: "15px" }}>
+                  {/* Total Income */}
+                  <div style={{ 
+                    backgroundColor: "white", 
+                    padding: "20px", 
+                    borderRadius: "8px",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
+                  }}>
+                    <p style={{ color: "grey", margin: "0 0 10px 0", fontSize: "14px" }}>💰 Total Income</p>
+                    <h2 style={{ margin: 0, color: "#4caf50", fontSize: "24px" }}>
+                      {formatCurrency(financials.totalIncome)}
+                    </h2>
+                  </div>
+
+                  {/* Total Expenses */}
+                  <div style={{ 
+                    backgroundColor: "white", 
+                    padding: "20px", 
+                    borderRadius: "8px",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
+                  }}>
+                    <p style={{ color: "grey", margin: "0 0 10px 0", fontSize: "14px" }}>💸 Total Expenses</p>
+                    <h2 style={{ margin: 0, color: "#f44336", fontSize: "24px" }}>
+                      {formatCurrency(financials.totalExpenses)}
+                    </h2>
+                  </div>
+
+                  {/* Net Profit */}
+                  <div style={{ 
+                    backgroundColor: "white", 
+                    padding: "20px", 
+                    borderRadius: "8px",
+                    boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
+                  }}>
+                    <p style={{ color: "grey", margin: "0 0 10px 0", fontSize: "14px" }}>📊 Net Profit</p>
+                    <h2 style={{ 
+                      margin: 0, 
+                      color: financials.netProfit >= 0 ? "#4caf50" : "#f44336",
+                      fontSize: "24px"
+                    }}>
+                      {formatCurrency(financials.netProfit)}
+                    </h2>
+                  </div>
+                </div>
+              )}
+            </div>
+
+            {/* Sales Chart */}
+            <div style={{
+              backgroundColor: "whitesmoke",
+              borderRadius: "10px",
+              padding: "20px",
+              boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+            }}>
+              <h4 style={{ margin: "0 0 15px 0", color: "#333" }}>Sales Distribution</h4>
+              <div style={{ 
+                backgroundColor: "white", 
+                padding: "20px", 
+                borderRadius: "8px",
+                display: "flex",
+                justifyContent: "center",
+                alignItems: "center",
+                minHeight: "300px",
+                boxShadow: "0 1px 3px rgba(0,0,0,0.1)"
+              }}>
+                <PieChart
+                  style={{ height: "250px" }}
+                  data={[
+                    { title: "Orders", value: 10, color: "#E38627" },
+                    { title: "Sales", value: 15, color: "#C13C37" },
+                    { title: "Revenue", value: 20, color: "#6A2135" },
+                  ]}
+                />
+              </div>
             </div>
           </div>
         </>
       )}
-      <br />
-      <span style={{ display: "flex" }}>
-        <div
-          style={{
-            width: "500px",
-            minHeight: "250px",
-            backgroundColor: "whitesmoke",
-            margin: "10px",
-            borderRadius: "10px",
-            padding: "15px"
-          }}
-        >
-          <h4 style={{ margin: "0 0 15px 0" }}>Recent Orders</h4>
-
-          {stats.recentOrders.length === 0 ? (
-            <p style={{ color: "grey" }}>No recent orders found</p>
-          ) : (
-            <div style={{ overflowY: "auto", maxHeight: "200px" }}>
-              {stats.recentOrders.map((order) => (
-                <div
-                  key={order.id}
-                  style={{
-                    backgroundColor: "white",
-                    padding: "10px",
-                    marginBottom: "8px",
-                    borderRadius: "5px",
-                    display: "flex",
-                    justifyContent: "space-between",
-                    alignItems: "center"
-                  }}
-                >
-                  <div>
-                    <strong>{order.customer}</strong>
-                    <p style={{ margin: "5px 0 0 0", fontSize: "12px", color: "#666" }}>
-                      {order.orderid} • {formatDate(order.date)}
-                    </p>
-                  </div>
-                  <div style={{ textAlign: "right" }}>
-                    <strong>{formatCurrency(order.amount)}</strong>
-                    <p style={{ margin: "5px 0 0 0", fontSize: "12px" }}>
-                      <span
-                        style={{
-                          backgroundColor: getStatusColor(order.status),
-                          color: "white",
-                          padding: "2px 6px",
-                          borderRadius: "8px",
-                          fontSize: "10px"
-                        }}
-                      >
-                        {order.status}
-                      </span>
-                    </p>
-                  </div>
-                </div>
-              ))}
-            </div>
-          )}
-        </div>
-        <div
-          style={{
-            width: "300px",
-            minHeight: "250px",
-            backgroundColor: "whitesmoke",
-            margin: "10px",
-            borderRadius: "10px",
-            padding: "15px"
-          }}
-        >
-          <h4 style={{ margin: "0 0 15px 0" }}>Inventory Overview</h4>
-          <div style={{ backgroundColor: "white", padding: "15px", borderRadius: "5px" }}>
-            <p style={{ color: "grey", margin: "0 0 10px 0" }}>Low Stock Items</p>
-            <h2 style={{ margin: "0 0 10px 0", color: stats.inventoryLowStock > 0 ? "#f44336" : "#4caf50" }}>
-              {stats.inventoryLowStock}
-            </h2>
-            <p style={{ fontSize: "12px", color: "#666", margin: 0 }}>
-              {stats.inventoryLowStock > 0 
-                ? "Items need restocking" 
-                : "All items in stock"}
-            </p>
-          </div>
-        </div>
-      </span>
-      <span style={{ display: "flex" }}>
-        <div
-          style={{
-            width: "400px",
-            height: "300px",
-            backgroundColor: "whitesmoke",
-            margin: "10px",
-            borderRadius: "10px",
-          }}
-        >
-          <h4>Sales Chart</h4>
-          <p style={{ color: "grey" }}>Sales Chat will be implemented here</p>
-
-             <PieChart
-          segmentsStyle={{ width: 100 }}
-          data={[
-            { title: "One", value: 10, color: "#E38627" },
-            { title: "Two", value: 15, color: "#C13C37" },
-            { title: "Three", value: 20, color: "#6A2135" },
-          ]}
-        />
-        </div>
-        <div
-          style={{
-            width: "400px",
-            height: "300px",
-            backgroundColor: "whitesmoke",
-            margin: "5px",
-            borderRadius: "10px",
-            padding: "15px"
-          }}
-        >
-          <h4 style={{ margin: "0 0 20px 0" }}>Financial Overview</h4>
-
-          {financials.loading ? (
-            <p style={{ color: "grey" }}>Loading financial data...</p>
-          ) : (
-            <span style={{ display: "flex", gap: "15px", flexWrap: "wrap" }}>
-              <div style={{ backgroundColor: "white", padding: "15px", borderRadius: "5px", flex: 1, minWidth: "100px" }}>
-                <p style={{ color: "grey", margin: "0 0 10px 0", fontSize: "14px" }}>Total Income</p>
-                <h3 style={{ margin: 0, color: "#4caf50" }}>{formatCurrency(financials.totalIncome)}</h3>
-              </div>
-              <div style={{ backgroundColor: "white", padding: "15px", borderRadius: "5px", flex: 1, minWidth: "100px" }}>
-                <p style={{ color: "grey", margin: "0 0 10px 0", fontSize: "14px" }}>Total Expenses</p>
-                <h3 style={{ margin: 0, color: "#f44336" }}>{formatCurrency(financials.totalExpenses)}</h3>
-              </div>
-              <div style={{ backgroundColor: "white", padding: "15px", borderRadius: "5px", flex: 1, minWidth: "100px" }}>
-                <p style={{ color: "grey", margin: "0 0 10px 0", fontSize: "14px" }}>Net Profit</p>
-                <h3 style={{ margin: 0, color: financials.netProfit >= 0 ? "#4caf50" : "#f44336" }}>
-                  {formatCurrency(financials.netProfit)}
-                </h3>
-              </div>
-            </span>
-          )}
-        </div>
-      </span>
-      <div style={{ width: 300 }}>
-     
-      </div>
-      ;{/* <img src="{img}" alt="pic" /> */}
     </div>
   );
 }

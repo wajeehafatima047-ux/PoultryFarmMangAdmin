@@ -1,6 +1,6 @@
 import React, { useState, useEffect } from "react";
 import { HiOutlineCube } from "react-icons/hi";
-import { collection, onSnapshot, query } from 'firebase/firestore';
+import { collection, onSnapshot, query, orderBy, limit } from 'firebase/firestore';
 import { db } from '../../firebase';
 
 import {
@@ -47,6 +47,7 @@ const data = [
 function ChickenSales() {
   const [salesData, setSalesData] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [currentChickenPrice, setCurrentChickenPrice] = useState(0);
   const [stats, setStats] = useState({
     totalSales: 0,
     totalRevenue: 0,
@@ -54,9 +55,25 @@ function ChickenSales() {
   });
 
   useEffect(() => {
+    // Real-time listener for chicken price
+    const priceQuery = query(
+      collection(db, 'chickenPrices'),
+      orderBy('date', 'desc'),
+      limit(1)
+    );
+    
+    const unsubscribePrice = onSnapshot(priceQuery, (snapshot) => {
+      if (!snapshot.empty) {
+        const latestPrice = snapshot.docs[0].data();
+        setCurrentChickenPrice(latestPrice.pricePerKg || 0);
+      }
+    }, (error) => {
+      console.error('Error fetching chicken price:', error);
+    });
+
     // Real-time listener for chicken sales
     const salesQuery = query(collection(db, 'chickenSales'));
-    const unsubscribe = onSnapshot(salesQuery, (snapshot) => {
+    const unsubscribeSales = onSnapshot(salesQuery, (snapshot) => {
       const data = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       setSalesData(data);
 
@@ -77,7 +94,10 @@ function ChickenSales() {
       setLoading(false);
     });
 
-    return () => unsubscribe();
+    return () => {
+      unsubscribePrice();
+      unsubscribeSales();
+    };
   }, []);
 
   // Group sales by month for chart
@@ -142,9 +162,9 @@ function ChickenSales() {
   }];
 
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-PK', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'PKR'
     }).format(amount);
   };
   
@@ -165,7 +185,22 @@ function ChickenSales() {
         </div>
       ) : (
         <>
-          <span style={{ display: "flex" }}>
+          <span style={{ display: "flex", flexWrap: "wrap" }}>
+            <div
+              style={{
+                width: 350,
+                height: 150,
+                backgroundColor: "whitesmoke",
+                borderRadius: "10px",
+                margin: "10px",
+                padding: "15px"
+              }}
+            >
+              <p style={{ color: "grey", margin: "0 0 10px 0" }}>Current Price per Kg</p>
+              <h3 style={{ margin: "0 0 10px 0" }}>{formatCurrency(currentChickenPrice)}</h3>
+              <p style={{ color: "grey", fontSize: "12px", margin: 0 }}>Live from price management</p>
+            </div>
+
             <div
               style={{
                 width: 350,
@@ -243,7 +278,7 @@ function ChickenSales() {
                 <Tooltip />
                 <Legend />
                 <Line type="monotone" dataKey="sales" stroke="#8884d8" name="Chickens Sold" />
-                <Line type="monotone" dataKey="revenue" stroke="#82ca9d" name="Revenue ($)" />
+                <Line type="monotone" dataKey="revenue" stroke="#82ca9d" name="Revenue (PKR)" />
               </LineChart>
             </ResponsiveContainer>
           )}

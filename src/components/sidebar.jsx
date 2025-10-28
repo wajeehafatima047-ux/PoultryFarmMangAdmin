@@ -16,6 +16,8 @@ import { GiMoneyStack } from "react-icons/gi";
 
 import { CiSettings } from "react-icons/ci";
 
+import { MdOutlineAttachMoney } from "react-icons/md";
+
 export default function Sidebar() {
   return (
     <div style={{ width: 200, height: "100%" }}>
@@ -221,6 +223,86 @@ export default function Sidebar() {
           </div>
         </li>
 
+        <li style={{ listStyleType: "none", marginBottom: 5 }}>
+          <div
+            style={{
+              display: "flex",
+              paddingLeft: 20,
+              paddingRight: 20,
+              paddingTop: 10,
+              paddingBottom: 10,
+              backgroundColor: "#f2f2f2",
+              borderRadius: 5,
+            }}
+          >
+            <div style={{ width: 50 }}>
+            <GiRoastChicken />
+            </div>
+
+            <div>
+              <a
+                style={{ textDecoration: "none", color: "black" }}
+                href="ChickenPriceManagement"
+              >
+              Chicken Price
+              </a>
+            </div>
+          </div>
+        </li>
+
+        <li style={{ listStyleType: "none", marginBottom: 5 }}>
+          <div
+            style={{
+              display: "flex",
+              paddingLeft: 20,
+              paddingRight: 20,
+              paddingTop: 10,
+              paddingBottom: 10,
+              backgroundColor: "#f2f2f2",
+              borderRadius: 5,
+            }}
+          >
+            <div style={{ width: 50 }}>
+            <GiRoastChicken />
+            </div>
+
+            <div>
+              <a
+                style={{ textDecoration: "none", color: "black" }}
+                href="ChickenPurchase"
+              >
+              Chicken Purchase
+              </a>
+            </div>
+          </div>
+        </li>
+
+        <li style={{ listStyleType: "none", marginBottom: 5 }}>
+          <div
+            style={{
+              display: "flex",
+              paddingLeft: 20,
+              paddingRight: 20,
+              paddingTop: 10,
+              paddingBottom: 10,
+              backgroundColor: "#f2f2f2",
+              borderRadius: 5,
+            }}
+          >
+            <div style={{ width: 50 }}>
+            <MdOutlineAttachMoney />
+            </div>
+
+            <div>
+              <a
+                style={{ textDecoration: "none", color: "black" }}
+                href="ExpenseManagement"
+              >
+              Expense
+              </a>
+            </div>
+          </div>
+        </li>
 
         <li style={{ listStyleType: "none", marginBottom: 5 }}>
           <div

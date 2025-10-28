@@ -159,6 +159,8 @@ import Payments from "./pages/Payments";
 import Employee from "./pages/Employee";
 
 import ChickenPurchaseForm from "./pages/ChickenPurchaseForm";
+import ChickenPriceManagement from "./pages/ChickenPriceManagement";
+import ChickenPurchase from "./pages/ChickenPurchase";
 
 import EmployeeForm from "./pages/EmployeeForm";
 import EmployeeAttendanceForm from "./pages/EmployeeAttendanceForm";
@@ -167,6 +169,7 @@ import EmployeeAttendanceForm from "./pages/EmployeeAttendanceForm";
 //
 
 import EmployeePaymentForm from "./pages/EmployeePaymentForm";
+import ExpenseManagement from "./pages/ExpenseManagement";
 export default function App() {
   // get user from redux store
   const user = useSelector((state) => state.home.user);
@@ -185,6 +188,9 @@ export default function App() {
               <Route path="/Inventory" element={<Inventory />} />
               <Route path="/Employee" element={<Employee />} />
               <Route path="/ChickenSales" element={<ChickenSales />} />
+              <Route path="/ChickenPriceManagement" element={<ChickenPriceManagement />} />
+              <Route path="/ChickenPurchase" element={<ChickenPurchase />} />
+              <Route path="/ExpenseManagement" element={<ExpenseManagement />} />
               <Route path="/Setting" element={<Setting />} />
               <Route path="/EmployeeForm" element={<EmployeeForm />} />
               <Route path="/EmployeePaymentForm" element={<EmployeePaymentForm />} />

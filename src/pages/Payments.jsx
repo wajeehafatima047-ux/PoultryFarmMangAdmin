@@ -81,7 +81,7 @@ Payment ID: ${invoiceData.paymentId}
 Order ID: ${invoiceData.orderId}
 Customer: ${invoiceData.customer}
 Date: ${invoiceData.date}
-Amount: $${parseFloat(invoiceData.amount).toFixed(2)}
+Amount: ${formatCurrency(invoiceData.amount)}
 Method: ${invoiceData.method}
 Status: ${invoiceData.status}
     `.trim();
@@ -118,6 +118,14 @@ Status: ${invoiceData.status}
       case 'Cancelled': return '🚫';
       default: return '❓';
     }
+  };
+
+  // Format currency in Pakistani Rupees
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-PK', {
+      style: 'currency',
+      currency: 'PKR'
+    }).format(amount || 0);
   };
 
   const filteredPayments = payments.filter(payment => {
@@ -161,7 +169,7 @@ Status: ${invoiceData.status}
           }}
         >
           <p style={{ color: "grey", margin: 0, fontSize: "14px" }}>Total Payments</p>
-          <h3 style={{ margin: "10px 0", color: "#007bff" }}>${totalPayments.toFixed(2)}</h3>
+          <h3 style={{ margin: "10px 0", color: "#007bff" }}>{formatCurrency(totalPayments)}</h3>
           <p style={{ color: "grey", margin: 0, fontSize: "12px" }}>From {payments.length} Transactions</p>
         </div>
 
@@ -178,7 +186,7 @@ Status: ${invoiceData.status}
           }}
         >
           <p style={{ color: "grey", margin: 0, fontSize: "14px" }}>Paid</p>
-          <h3 style={{ margin: "10px 0", color: "#4caf50" }}>${paidPayments.toFixed(2)}</h3>
+          <h3 style={{ margin: "10px 0", color: "#4caf50" }}>{formatCurrency(paidPayments)}</h3>
           <p style={{ color: "grey", margin: 0, fontSize: "12px" }}>{payments.filter(p => p.status === 'Completed').length} Transactions</p>
         </div>
 
@@ -195,7 +203,7 @@ Status: ${invoiceData.status}
           }}
         >
           <p style={{ color: "grey", margin: 0, fontSize: "14px" }}>Outstanding</p>
-          <h3 style={{ margin: "10px 0", color: "#ff9800" }}>${pendingPayments.toFixed(2)}</h3>
+          <h3 style={{ margin: "10px 0", color: "#ff9800" }}>{formatCurrency(pendingPayments)}</h3>
           <p style={{ color: "grey", margin: 0, fontSize: "12px" }}>{payments.filter(p => p.status === 'Pending').length} Transactions</p>
         </div>
       </div>
@@ -321,7 +329,7 @@ Status: ${invoiceData.status}
                       <td style={{ padding: "12px" }}>{payment.orderid}</td>
                       <td style={{ padding: "12px" }}>{payment.customer}</td>
                       <td style={{ padding: "12px" }}>{payment.date}</td>
-                      <td style={{ padding: "12px", fontWeight: "500" }}>${parseFloat(payment.amount || 0).toFixed(2)}</td>
+                      <td style={{ padding: "12px", fontWeight: "500" }}>{formatCurrency(payment.amount)}</td>
                       <td style={{ padding: "12px" }}>
                         <span
                           style={{

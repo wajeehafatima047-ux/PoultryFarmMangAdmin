@@ -274,9 +274,9 @@ function Employee() {
 
   // Format currency
   const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-US', {
+    return new Intl.NumberFormat('en-PK', {
       style: 'currency',
-      currency: 'USD'
+      currency: 'PKR'
     }).format(amount);
   };
 
@@ -818,11 +818,11 @@ function Employee() {
                           <tr key={record.id} style={{ borderBottom: "1px solid #f0f0f0" }}>
                             <td style={{ padding: "12px", fontWeight: "500" }}>{getEmployeeName(record.employee)}</td>
                             <td style={{ padding: "12px" }}>{record.position}</td>
-                            <td style={{ padding: "12px", fontWeight: "500" }}>${parseFloat(record.baseSalary || 0).toFixed(2)}</td>
+                            <td style={{ padding: "12px", fontWeight: "500" }}>{formatCurrency(record.baseSalary || 0)}</td>
                             <td style={{ padding: "12px" }}>{record.workingDay} days</td>
-                            <td style={{ padding: "12px", color: "#4caf50", fontWeight: "500" }}>${parseFloat(record.bonus || 0).toFixed(2)}</td>
-                            <td style={{ padding: "12px", color: "#f44336", fontWeight: "500" }}>${parseFloat(record.deduction || 0).toFixed(2)}</td>
-                            <td style={{ padding: "12px", fontWeight: "bold", color: "#007bff" }}>${parseFloat(record.netSalary || 0).toFixed(2)}</td>
+                            <td style={{ padding: "12px", color: "#4caf50", fontWeight: "500" }}>{formatCurrency(record.bonus || 0)}</td>
+                            <td style={{ padding: "12px", color: "#f44336", fontWeight: "500" }}>{formatCurrency(record.deduction || 0)}</td>
+                            <td style={{ padding: "12px", fontWeight: "bold", color: "#007bff" }}>{formatCurrency(record.netSalary || 0)}</td>
                             <td style={{ padding: "12px" }}>
                               <span
                                 style={{
