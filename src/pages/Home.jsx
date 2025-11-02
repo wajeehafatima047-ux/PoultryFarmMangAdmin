@@ -2,9 +2,8 @@ import React from "react";
 
 import { SiNginxproxymanager } from "react-icons/si";
 import { CiShoppingCart } from "react-icons/ci";
-
+import { BiSolidFoodMenu } from "react-icons/bi";
 import { FaPerson } from "react-icons/fa6";
-
 import { GiRoastChicken } from "react-icons/gi";
 import { GiMoneyStack } from "react-icons/gi";
 import img from "./img.png";
@@ -135,6 +134,40 @@ export default function Home() {
               <h2 style={{ margin: "10px 0", color: "#4caf50", fontSize: "20px" }}>{formatCurrency(stats.revenue)}</h2>
               <p style={{ color: "grey", fontSize: "12px", margin: 0 }}>Total revenue</p>
             </div>
+
+            {/* Feed Stock Card */}
+            <div style={{
+              backgroundColor: "whitesmoke",
+              borderRadius: "10px",
+              padding: "20px",
+              boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+                <p style={{ color: "grey", margin: 0, fontSize: "14px", fontWeight: "500" }}>Feed Stock</p>
+                <span style={{ fontSize: "24px", color: "#795548" }}>
+                  <BiSolidFoodMenu />
+                </span>
+              </div>
+              <h2 style={{ margin: "10px 0", color: "#333" }}>{stats.totalFeedStock.toFixed(2)} kg</h2>
+              <p style={{ color: "grey", fontSize: "12px", margin: 0 }}>Total in stock</p>
+            </div>
+
+            {/* Chicken Stock Card */}
+            <div style={{
+              backgroundColor: "whitesmoke",
+              borderRadius: "10px",
+              padding: "20px",
+              boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+            }}>
+              <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+                <p style={{ color: "grey", margin: 0, fontSize: "14px", fontWeight: "500" }}>Chicken Stock</p>
+                <span style={{ fontSize: "24px", color: "#ff5722" }}>
+                  <GiRoastChicken />
+                </span>
+              </div>
+              <h2 style={{ margin: "10px 0", color: "#333" }}>{stats.totalChickenStock}</h2>
+              <p style={{ color: "grey", fontSize: "12px", margin: 0 }}>Total in stock</p>
+            </div>
           </div>
 
           {/* Recent Orders and Inventory Section - Row 2 */}
@@ -171,17 +204,17 @@ export default function Home() {
                       }}
                     >
                       <div>
-                        <strong style={{ fontSize: "14px" }}>{order.customer}</strong>
+                        <strong style={{ fontSize: "14px" }}>{order.customerName || "N/A"}</strong>
                         <p style={{ margin: "5px 0 0 0", fontSize: "12px", color: "#666" }}>
-                          {order.orderid} • {formatDate(order.date)}
+                          {order.orderId} • {order.saleDate?.toDate ? order.saleDate.toDate().toLocaleDateString() : "N/A"}
                         </p>
                       </div>
                       <div style={{ textAlign: "right" }}>
-                        <strong style={{ fontSize: "14px" }}>{formatCurrency(order.amount)}</strong>
+                        <strong style={{ fontSize: "14px" }}>{formatCurrency(order.totalAmount || 0)}</strong>
                         <p style={{ margin: "5px 0 0 0", fontSize: "12px" }}>
                           <span
                             style={{
-                              backgroundColor: getStatusColor(order.status),
+                              backgroundColor: getStatusColor(order.orderStatus),
                               color: "white",
                               padding: "4px 8px",
                               borderRadius: "12px",
@@ -189,7 +222,7 @@ export default function Home() {
                               fontWeight: "500"
                             }}
                           >
-                            {order.status}
+                            {order.orderStatus}
                           </span>
                         </p>
                       </div>

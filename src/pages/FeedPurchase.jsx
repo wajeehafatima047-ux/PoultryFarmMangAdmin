@@ -4,9 +4,8 @@ import { db } from "../../firebase";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
 
-function ChickenSales() {
-  const [sales, setSales] = useState([]);
-  const [chickenInventory, setChickenInventory] = useState([]);
+function FeedPurchase() {
+  const [purchases, setPurchases] = useState([]);
   const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
   const [searchTerm, setSearchTerm] = useState("");
@@ -14,164 +13,140 @@ function ChickenSales() {
   const itemsPerPage = 10;
 
   const [formData, setFormData] = useState({
-    customerName: "",
-    customerPhone: "",
-    breed: "",
-    quantitySold: "",
+    vendorId: "",
+    itemName: "",
+    quantityPurchased: "",
+    unit: "kg",
     pricePerUnit: "",
-    totalAmount: 0,
-    saleDate: new Date().toISOString().split('T')[0],
+    totalCost: 0,
+    purchaseDate: new Date().toISOString().split('T')[0],
     invoiceId: ""
   });
 
   useEffect(() => {
-    loadSales();
-    loadChickenInventory();
+    loadPurchases();
   }, []);
 
   useEffect(() => {
-    const qty = parseFloat(formData.quantitySold) || 0;
+    const qty = parseFloat(formData.quantityPurchased) || 0;
     const price = parseFloat(formData.pricePerUnit) || 0;
-    setFormData(prev => ({ ...prev, totalAmount: (qty * price).toFixed(2) }));
-  }, [formData.quantitySold, formData.pricePerUnit]);
+    setFormData(prev => ({ ...prev, totalCost: (qty * price).toFixed(2) }));
+  }, [formData.quantityPurchased, formData.pricePerUnit]);
 
-  const loadSales = async () => {
+  const loadPurchases = async () => {
     try {
       setLoading(true);
-      const q = query(collection(db, "orders"), orderBy("saleDate", "desc"));
+      const q = query(collection(db, "feedPurchases"), orderBy("purchaseDate", "desc"));
       const querySnapshot = await getDocs(q);
       const data = [];
       querySnapshot.forEach((doc) => {
         data.push({ id: doc.id, ...doc.data() });
       });
-      setSales(data);
+      setPurchases(data);
     } catch (error) {
-      console.error("Error loading sales:", error);
-      toast.error("Failed to load sales");
+      console.error("Error loading purchases:", error);
+      toast.error("Failed to load feed purchases");
     } finally {
       setLoading(false);
-    }
-  };
-
-  const loadChickenInventory = async () => {
-    try {
-      const { getAllData } = await import("../Helper/firebaseHelper");
-      const inventory = await getAllData("chickenInventory");
-      setChickenInventory(inventory);
-    } catch (error) {
-      console.error("Error loading inventory:", error);
     }
   };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      // Find the selected chicken breed
-      const selectedChicken = chickenInventory.find(ch => ch.breed === formData.breed);
-
-      if (!selectedChicken) {
-        toast.error("Please select a valid breed");
-        return;
-      }
-
-      const quantitySold = parseFloat(formData.quantitySold);
-      const availableStock = selectedChicken.totalInStock;
-
-      if (quantitySold > availableStock) {
-        toast.error(`Insufficient stock! Available: ${availableStock} chickens`);
-        return;
-      }
-
-      const saleData = {
+      const purchaseData = {
         ...formData,
-        quantitySold: quantitySold,
+        quantityPurchased: parseFloat(formData.quantityPurchased),
         pricePerUnit: parseFloat(formData.pricePerUnit),
-        totalAmount: parseFloat(formData.totalAmount),
-        saleDate: Timestamp.fromDate(new Date(formData.saleDate))
+        totalCost: parseFloat(formData.totalCost),
+        purchaseDate: Timestamp.fromDate(new Date(formData.purchaseDate))
       };
 
-      await addDoc(collection(db, "orders"), saleData);
-      toast.success("Sale recorded successfully!");
+      await addDoc(collection(db, "feedPurchases"), purchaseData);
+      toast.success("Feed purchase recorded successfully!");
       
       // Update inventory
-      await updateChickenInventory(selectedChicken.id, quantitySold);
+      await updateFeedInventory(formData.itemName, formData.quantityPurchased);
       
-      // Create receipt
-      await createReceipt(formData.totalAmount);
+      // Create expense
+      await createExpense('feedPurchase', purchaseData);
       
       setFormData({
-        customerName: "",
-        customerPhone: "",
-        breed: "",
-        quantitySold: "",
+        vendorId: "",
+        itemName: "",
+        quantityPurchased: "",
+        unit: "kg",
         pricePerUnit: "",
-        totalAmount: 0,
-        saleDate: new Date().toISOString().split('T')[0],
+        totalCost: 0,
+        purchaseDate: new Date().toISOString().split('T')[0],
         invoiceId: ""
       });
       setShowForm(false);
-      loadSales();
+      loadPurchases();
     } catch (error) {
-      console.error("Error recording sale:", error);
-      toast.error("Failed to record sale");
+      console.error("Error adding purchase:", error);
+      toast.error("Failed to record purchase");
     }
   };
 
-  const updateChickenInventory = async (itemId, quantitySold) => {
+  const updateFeedInventory = async (itemName, quantity) => {
     try {
-      const { getDataById, updateData } = await import("../Helper/firebaseHelper");
-      const item = await getDataById("chickenInventory", itemId);
+      const { getAllData, addData, updateData } = await import("../Helper/firebaseHelper");
+      const inventory = await getAllData("feedInventory");
+      const existingItem = inventory.find(item => item.itemName === itemName);
       
-      if (item) {
-        const newStock = item.totalInStock - quantitySold;
-        await updateData("chickenInventory", itemId, {
-          totalInStock: Math.max(0, newStock),
+      if (existingItem) {
+        const newQuantity = existingItem.totalInStock + parseFloat(quantity);
+        await updateData("feedInventory", existingItem.id, {
+          totalInStock: newQuantity,
           lastUpdated: Timestamp.now()
         });
-        
-        // Show low stock alert
-        if (newStock < 50) {
-          toast.warning(`Low stock alert: ${item.breed} has ${newStock} chickens remaining`);
-        }
+      } else {
+        await addData("feedInventory", {
+          itemName,
+          totalInStock: parseFloat(quantity),
+          unit: formData.unit,
+          lastUpdated: Timestamp.now()
+        });
       }
     } catch (error) {
       console.error("Error updating inventory:", error);
     }
   };
 
-  const createReceipt = async (amount) => {
+  const createExpense = async (category, purchaseData) => {
     try {
       const { addData } = await import("../Helper/firebaseHelper");
-      await addData("receipts", {
-        referenceId: `sale_${Date.now()}`,
-        description: "Chicken Sale",
-        amount: parseFloat(amount),
+      await addData("expenses", {
+        category: category,
+        referenceId: purchaseData.id || `feed_${Date.now()}`,
+        description: `Feed Purchase - ${purchaseData.itemName}`,
+        amount: purchaseData.totalCost,
         date: Timestamp.now(),
         createdBy: "system"
       });
     } catch (error) {
-      console.error("Error creating receipt:", error);
+      console.error("Error creating expense:", error);
     }
   };
 
-  const filteredSales = sales.filter(sale =>
-    sale.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    sale.customerPhone?.includes(searchTerm) ||
-    sale.breed?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    sale.invoiceId?.toLowerCase().includes(searchTerm.toLowerCase())
+  const filteredPurchases = purchases.filter(purchase =>
+    purchase.itemName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    purchase.vendorId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    purchase.invoiceId?.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const paginatedSales = filteredSales.slice(
+  const paginatedPurchases = filteredPurchases.slice(
     (currentPage - 1) * itemsPerPage,
     currentPage * itemsPerPage
   );
 
-  const totalPages = Math.ceil(filteredSales.length / itemsPerPage);
+  const totalPages = Math.ceil(filteredPurchases.length / itemsPerPage);
 
   return (
     <div style={{ padding: "20px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
-        <h2>Chicken Sales (Orders)</h2>
+        <h2>Feed Purchase</h2>
         <button
           onClick={() => setShowForm(!showForm)}
           style={{
@@ -184,7 +159,7 @@ function ChickenSales() {
             fontSize: 16
           }}
         >
-          {showForm ? "Cancel" : "New Sale"}
+          {showForm ? "Cancel" : "Add Purchase"}
         </button>
       </div>
 
@@ -196,51 +171,47 @@ function ChickenSales() {
           marginBottom: 20,
           boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
         }}>
-          <h3>Record New Sale</h3>
+          <h3>Record Feed Purchase</h3>
           <form onSubmit={handleSubmit}>
             <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 15 }}>
               <input
                 type="text"
-                placeholder="Customer Name"
-                value={formData.customerName}
-                onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
+                placeholder="Vendor ID"
+                value={formData.vendorId}
+                onChange={(e) => setFormData({ ...formData, vendorId: e.target.value })}
                 required
                 style={{ padding: 10, borderRadius: 5, border: "1px solid #ddd" }}
               />
               <input
                 type="text"
-                placeholder="Customer Phone"
-                value={formData.customerPhone}
-                onChange={(e) => setFormData({ ...formData, customerPhone: e.target.value })}
-                required
-                style={{ padding: 10, borderRadius: 5, border: "1px solid #ddd" }}
-              />
-              <select
-                value={formData.breed}
-                onChange={(e) => setFormData({ ...formData, breed: e.target.value })}
-                required
-                style={{ padding: 10, borderRadius: 5, border: "1px solid #ddd" }}
-              >
-                <option value="">Select Breed</option>
-                {chickenInventory.map((ch) => (
-                  <option key={ch.id} value={ch.breed}>
-                    {ch.breed} ({ch.totalInStock} available)
-                  </option>
-                ))}
-              </select>
-              <input
-                type="number"
-                step="1"
-                placeholder="Quantity Sold"
-                value={formData.quantitySold}
-                onChange={(e) => setFormData({ ...formData, quantitySold: e.target.value })}
+                placeholder="Item Name"
+                value={formData.itemName}
+                onChange={(e) => setFormData({ ...formData, itemName: e.target.value })}
                 required
                 style={{ padding: 10, borderRadius: 5, border: "1px solid #ddd" }}
               />
               <input
                 type="number"
                 step="0.01"
-                placeholder="Price Per Chicken"
+                placeholder="Quantity Purchased"
+                value={formData.quantityPurchased}
+                onChange={(e) => setFormData({ ...formData, quantityPurchased: e.target.value })}
+                required
+                style={{ padding: 10, borderRadius: 5, border: "1px solid #ddd" }}
+              />
+              <select
+                value={formData.unit}
+                onChange={(e) => setFormData({ ...formData, unit: e.target.value })}
+                style={{ padding: 10, borderRadius: 5, border: "1px solid #ddd" }}
+              >
+                <option value="kg">kg</option>
+                <option value="bags">bags</option>
+                <option value="tons">tons</option>
+              </select>
+              <input
+                type="number"
+                step="0.01"
+                placeholder="Price Per Unit"
                 value={formData.pricePerUnit}
                 onChange={(e) => setFormData({ ...formData, pricePerUnit: e.target.value })}
                 required
@@ -248,8 +219,8 @@ function ChickenSales() {
               />
               <input
                 type="date"
-                value={formData.saleDate}
-                onChange={(e) => setFormData({ ...formData, saleDate: e.target.value })}
+                value={formData.purchaseDate}
+                onChange={(e) => setFormData({ ...formData, purchaseDate: e.target.value })}
                 required
                 style={{ padding: 10, borderRadius: 5, border: "1px solid #ddd" }}
               />
@@ -262,8 +233,8 @@ function ChickenSales() {
               />
               <input
                 type="text"
-                placeholder="Total Amount"
-                value={formData.totalAmount}
+                placeholder="Total Cost"
+                value={formData.totalCost}
                 readOnly
                 style={{ padding: 10, borderRadius: 5, border: "1px solid #ddd", backgroundColor: "#e9e9e9" }}
               />
@@ -281,7 +252,7 @@ function ChickenSales() {
                 fontSize: 16
               }}
             >
-              Record Sale
+              Save Purchase
             </button>
           </form>
         </div>
@@ -290,7 +261,7 @@ function ChickenSales() {
       <div style={{ marginBottom: 20 }}>
         <input
           type="text"
-          placeholder="Search by customer, breed, or invoice..."
+          placeholder="Search by item name, vendor, or invoice..."
           value={searchTerm}
           onChange={(e) => setSearchTerm(e.target.value)}
           style={{
@@ -312,44 +283,42 @@ function ChickenSales() {
               <thead>
                 <tr style={{ backgroundColor: "#4CAF50", color: "white" }}>
                   <th style={{ padding: 12, textAlign: "left" }}>Date</th>
-                  <th style={{ padding: 12, textAlign: "left" }}>Customer Name</th>
-                  <th style={{ padding: 12, textAlign: "left" }}>Phone</th>
-                  <th style={{ padding: 12, textAlign: "left" }}>Breed</th>
+                  <th style={{ padding: 12, textAlign: "left" }}>Item Name</th>
+                  <th style={{ padding: 12, textAlign: "left" }}>Vendor ID</th>
                   <th style={{ padding: 12, textAlign: "right" }}>Quantity</th>
                   <th style={{ padding: 12, textAlign: "right" }}>Price/Unit</th>
-                  <th style={{ padding: 12, textAlign: "right" }}>Total Amount</th>
+                  <th style={{ padding: 12, textAlign: "right" }}>Total Cost</th>
                   <th style={{ padding: 12, textAlign: "left" }}>Invoice ID</th>
                 </tr>
               </thead>
               <tbody>
-                {paginatedSales.map((sale) => (
-                  <tr key={sale.id} style={{ borderBottom: "1px solid #ddd" }}>
+                {paginatedPurchases.map((purchase) => (
+                  <tr key={purchase.id} style={{ borderBottom: "1px solid #ddd" }}>
                     <td style={{ padding: 12 }}>
-                      {sale.saleDate?.toDate ? 
-                        sale.saleDate.toDate().toLocaleDateString() : "N/A"}
+                      {purchase.purchaseDate?.toDate ? 
+                        purchase.purchaseDate.toDate().toLocaleDateString() : "N/A"}
                     </td>
-                    <td style={{ padding: 12 }}>{sale.customerName}</td>
-                    <td style={{ padding: 12 }}>{sale.customerPhone}</td>
-                    <td style={{ padding: 12 }}>{sale.breed}</td>
+                    <td style={{ padding: 12 }}>{purchase.itemName}</td>
+                    <td style={{ padding: 12 }}>{purchase.vendorId}</td>
                     <td style={{ padding: 12, textAlign: "right" }}>
-                      {sale.quantitySold}
+                      {purchase.quantityPurchased} {purchase.unit}
                     </td>
                     <td style={{ padding: 12, textAlign: "right" }}>
-                      ${sale.pricePerUnit?.toFixed(2)}
+                      ${purchase.pricePerUnit?.toFixed(2)}
                     </td>
                     <td style={{ padding: 12, textAlign: "right", fontWeight: "bold" }}>
-                      ${sale.totalAmount?.toFixed(2)}
+                      ${purchase.totalCost?.toFixed(2)}
                     </td>
-                    <td style={{ padding: 12 }}>{sale.invoiceId || "N/A"}</td>
+                    <td style={{ padding: 12 }}>{purchase.invoiceId || "N/A"}</td>
                   </tr>
                 ))}
               </tbody>
             </table>
           </div>
 
-          {filteredSales.length === 0 && (
+          {filteredPurchases.length === 0 && (
             <div style={{ textAlign: "center", padding: 40, color: "#666" }}>
-              No sales found
+              No feed purchases found
             </div>
           )}
 
@@ -394,4 +363,4 @@ function ChickenSales() {
   );
 }
 
-export default ChickenSales;
+export default FeedPurchase;

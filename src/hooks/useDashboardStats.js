@@ -11,6 +11,8 @@ export const useDashboardStats = () => {
     revenue: 0,
     recentOrders: [],
     inventoryLowStock: 0,
+    totalFeedStock: 0,
+    totalChickenStock: 0,
     loading: true,
     error: null
   });
@@ -27,20 +29,34 @@ export const useDashboardStats = () => {
         // Calculate total orders
         const totalOrders = ordersData.length;
         
-        // Calculate revenue (sum of all order amounts)
-        const revenue = ordersData.reduce((sum, order) => {
-          return sum + (parseFloat(order.amount) || 0);
-        }, 0);
+        // Calculate revenue from delivered orders only
+        const revenue = ordersData
+          .filter(order => order.orderStatus === 'Delivered')
+          .reduce((sum, order) => {
+            return sum + (parseFloat(order.totalAmount) || 0);
+          }, 0);
+        
+        // Calculate total chicken sales quantity
+        const chickenSales = ordersData
+          .filter(order => order.orderStatus === 'Delivered')
+          .reduce((sum, order) => {
+            return sum + (parseInt(order.quantitySold) || 0);
+          }, 0);
         
         // Get recent orders (last 5)
         const recentOrders = ordersData
-          .sort((a, b) => new Date(b.date) - new Date(a.date))
+          .sort((a, b) => {
+            const dateA = a.saleDate?.toDate ? a.saleDate.toDate() : new Date(a.saleDate || 0);
+            const dateB = b.saleDate?.toDate ? b.saleDate.toDate() : new Date(b.saleDate || 0);
+            return dateB - dateA;
+          })
           .slice(0, 5);
 
         setStats(prev => ({
           ...prev,
           totalOrders,
           revenue,
+          chickenSales,
           recentOrders,
           loading: false
         }));
@@ -49,26 +65,6 @@ export const useDashboardStats = () => {
         setStats(prev => ({ ...prev, error: error.message, loading: false }));
       });
       unsubscribers.push(unsubOrders);
-
-      // Listen to chicken sales collection
-      const chickenSalesQuery = query(collection(db, 'chickenSales'));
-      const unsubChickenSales = onSnapshot(chickenSalesQuery, (snapshot) => {
-        const salesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-        
-        // Calculate total chicken sales
-        const chickenSales = salesData.reduce((sum, sale) => {
-          return sum + (parseInt(sale.quantity) || 0);
-        }, 0);
-
-        setStats(prev => ({
-          ...prev,
-          chickenSales,
-          loading: false
-        }));
-      }, (error) => {
-        console.error('Error fetching chicken sales:', error);
-      });
-      unsubscribers.push(unsubChickenSales);
 
       // Listen to employees collection
       const employeesQuery = query(collection(db, 'employees'));
@@ -110,6 +106,44 @@ export const useDashboardStats = () => {
       });
       unsubscribers.push(unsubInventory);
 
+      // Listen to feed inventory
+      const feedInventoryQuery = query(collection(db, 'feedInventory'));
+      const unsubFeedInventory = onSnapshot(feedInventoryQuery, (snapshot) => {
+        const feedData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        const totalFeedStock = feedData.reduce((sum, item) => {
+          return sum + (parseFloat(item.totalInStock) || 0);
+        }, 0);
+
+        setStats(prev => ({
+          ...prev,
+          totalFeedStock,
+          loading: false
+        }));
+      }, (error) => {
+        console.error('Error fetching feed inventory:', error);
+      });
+      unsubscribers.push(unsubFeedInventory);
+
+      // Listen to chicken inventory
+      const chickenInventoryQuery = query(collection(db, 'chickenInventory'));
+      const unsubChickenInventory = onSnapshot(chickenInventoryQuery, (snapshot) => {
+        const chickenData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        
+        const totalChickenStock = chickenData.reduce((sum, item) => {
+          return sum + (parseFloat(item.totalInStock) || 0);
+        }, 0);
+
+        setStats(prev => ({
+          ...prev,
+          totalChickenStock,
+          loading: false
+        }));
+      }, (error) => {
+        console.error('Error fetching chicken inventory:', error);
+      });
+      unsubscribers.push(unsubChickenInventory);
+
     } catch (error) {
       console.error('Error setting up listeners:', error);
       setStats(prev => ({ ...prev, error: error.message, loading: false }));
@@ -136,14 +170,14 @@ export const useFinancialStats = () => {
   useEffect(() => {
     const unsubscribers = [];
 
-    // Listen to orders for income
-    const ordersQuery = query(collection(db, 'orders'));
-    const unsubOrders = onSnapshot(ordersQuery, (snapshot) => {
-      const ordersData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // Listen to receipts for income
+    const receiptsQuery = query(collection(db, 'receipts'));
+    const unsubReceipts = onSnapshot(receiptsQuery, (snapshot) => {
+      const receiptsData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       
-      const totalIncome = ordersData
-        .filter(order => order.payments === 'Paid')
-        .reduce((sum, order) => sum + (parseFloat(order.amount) || 0), 0);
+      const totalIncome = receiptsData.reduce((sum, receipt) => {
+        return sum + (parseFloat(receipt.amount) || 0);
+      }, 0);
 
       setFinancials(prev => {
         const netProfit = totalIncome - prev.totalExpenses;
@@ -155,19 +189,18 @@ export const useFinancialStats = () => {
         };
       });
     });
-    unsubscribers.push(unsubOrders);
+    unsubscribers.push(unsubReceipts);
 
-    // Listen to payroll for expenses
-    const payrollQuery = query(collection(db, 'payroll'));
-    const unsubPayroll = onSnapshot(payrollQuery, (snapshot) => {
-      const payrollData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+    // Listen to expenses
+    const expensesQuery = query(collection(db, 'expenses'));
+    const unsubExpenses = onSnapshot(expensesQuery, (snapshot) => {
+      const expensesData = snapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
       
-      const payrollExpenses = payrollData
-        .filter(pay => pay.status === 'Paid')
-        .reduce((sum, pay) => sum + (parseFloat(pay.netSalary) || 0), 0);
+      const totalExpenses = expensesData.reduce((sum, expense) => {
+        return sum + (parseFloat(expense.amount) || 0);
+      }, 0);
 
       setFinancials(prev => {
-        const totalExpenses = payrollExpenses;
         const netProfit = prev.totalIncome - totalExpenses;
         return {
           ...prev,
@@ -177,7 +210,7 @@ export const useFinancialStats = () => {
         };
       });
     });
-    unsubscribers.push(unsubPayroll);
+    unsubscribers.push(unsubExpenses);
 
     return () => {
       unsubscribers.forEach(unsubscribe => unsubscribe());

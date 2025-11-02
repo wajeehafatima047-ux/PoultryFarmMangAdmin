@@ -6,6 +6,7 @@ const PurchaseChickenForm = ({ purchaseId, onClose, onSuccess }) => {
     purchaseId: '',
     purchaseDate: new Date().toISOString().split('T')[0],
     supplier: '',
+    breed: '',
     quantity: '',
     pricePerChicken: '',
     totalCost: 0,
@@ -91,8 +92,12 @@ const PurchaseChickenForm = ({ purchaseId, onClose, onSuccess }) => {
         await updateData('chickenPurchases', purchaseId, purchaseData);
         alert('Purchase updated successfully!');
       } else {
-        await addData('chickenPurchases', purchaseData);
+        const addedId = await addData('chickenPurchases', purchaseData);
         alert('Purchase added successfully!');
+        
+        // Update inventory and create expense
+        await updateChickenInventory(purchaseData.quantity);
+        await createExpense('chickenPurchase', addedId, purchaseData.totalCost);
       }
 
       onSuccess();
@@ -101,6 +106,52 @@ const PurchaseChickenForm = ({ purchaseId, onClose, onSuccess }) => {
       console.error('Error saving purchase:', error);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const updateChickenInventory = async (quantity) => {
+    try {
+      // For now, we'll add a generic breed. In production, this should come from form
+      const breed = formData.breed || "Generic";
+      const { getAllData, addData, updateData } = await import('../Helper/firebaseHelper');
+      const { Timestamp } = await import('firebase/firestore');
+      
+      const inventory = await getAllData("chickenInventory");
+      const existingItem = inventory.find(item => item.breed === breed);
+      
+      if (existingItem) {
+        const newQuantity = existingItem.totalInStock + parseInt(quantity);
+        await updateData("chickenInventory", existingItem.id, {
+          totalInStock: newQuantity,
+          lastUpdated: Timestamp.now()
+        });
+      } else {
+        await addData("chickenInventory", {
+          breed: breed,
+          totalInStock: parseInt(quantity),
+          lastUpdated: Timestamp.now()
+        });
+      }
+    } catch (error) {
+      console.error("Error updating inventory:", error);
+    }
+  };
+
+  const createExpense = async (category, referenceId, amount) => {
+    try {
+      const { addData } = await import('../Helper/firebaseHelper');
+      const { Timestamp } = await import('firebase/firestore');
+      
+      await addData("expenses", {
+        category: category,
+        referenceId: referenceId,
+        description: "Chicken Purchase",
+        amount: parseFloat(amount),
+        date: Timestamp.now(),
+        createdBy: "system"
+      });
+    } catch (error) {
+      console.error("Error creating expense:", error);
     }
   };
 
@@ -190,6 +241,20 @@ const PurchaseChickenForm = ({ purchaseId, onClose, onSuccess }) => {
               value={formData.supplier}
               onChange={handleInputChange}
               placeholder="Enter supplier name"
+              required
+              style={inputStyle}
+            />
+          </div>
+
+          {/* Breed */}
+          <div style={{ marginBottom: "15px" }}>
+            <label style={labelStyle}>Breed *</label>
+            <input
+              type="text"
+              name="breed"
+              value={formData.breed}
+              onChange={handleInputChange}
+              placeholder="Enter chicken breed"
               required
               style={inputStyle}
             />

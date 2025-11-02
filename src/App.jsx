@@ -1,175 +1,37 @@
-// import React from "react";
-// import { BrowserRouter as Router, Routes, Route } from "react-router-dom";
-// import Sidebar from "./components/sidebar";
-// import Login from "./pages/Login";
-// import Home from "./pages/Home";
-// import Orders from "./pages/orders";
-
-// import Signup from "./pages/Signup";
-
-// import Financials from "./pages/Financials";
-// import Setting from "./pages/Setting";
-// import ChickenSales from "./pages/ChickenSales";
-
-// import Inventory from "./pages/Inventory";
-// import Payments from "./pages/Payments";
-// import Employee from "./pages/Employee";
-
-// const App = () => {
-//   return (
-//     <Router>
-//       <div style={{ display: "flex" }}>
-//         <Sidebar />
-//         <div style={{ flex: 1, padding: "20px" }}>
-//           <Routes>
-//             <Route path="/" element={<Home />} />
-
-//                  <Route path="/Signup" element={<Signup />} />
-//             <Route path="/about" element={<Login />} />
-//             <Route path="/Orders" element={<Orders />} />
-//             <Route path="/Financials" element={<Financials />} />
-//             <Route path="/Payments" element={<Payments />} />
-//             <Route path="/Inventory" element={<Inventory />} />
-//             <Route path="/Employee" element={<Employee />} />
-//             <Route path="/ChickenSales" element={<ChickenSales />} />
-//             <Route path="/Setting" element={<Setting />} />
-//           </Routes>
-//         </div>
-//       </div>
-//     </Router>
-//   );
-// };
-
-// const App = () => {
-//   return (
-//     <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
-//       <Provider store={store}>
-//         <PersistGate loading={null} persistor={persistor}>
-//           <RenderStack />
-//         </PersistGate>
-//       </Provider>
-//     </SafeAreaView>
-//   );
-// };
-
-// export default App;
-
-// yusra
-
-// import React from 'react';
-// import { BrowserRouter as Router, Routes, Route,Link} from 'react-router-dom';
-// import Sidebar from './components/sidebar';
-// import { createNativeStackNavigator } from "@react-navigation/native-stack";
-// import { Provider, useSelector } from "react-redux";
-// import { PersistGate } from "redux-persist/integration/react";
-
-// import { persistor, store } from "./redux/store";
-// // import Sidebar from "./components/sidebar";
-// import Login from "./pages/Login";
-// import Home from "./pages/Home";
-// import Orders from "./pages/orders";
-
-// import Signup from "./pages/Signup";
-
-// import Financials from "./pages/Financials";
-// import Setting from "./pages/Setting";
-// import ChickenSales from "./pages/ChickenSales";
-
-// import Inventory from "./pages/Inventory";
-// import Payments from "./pages/Payments";
-// import Employee from "./pages/Employee";
-
-// const Stack = createNativeStackNavigator();
-
-// function RenderStack() {
-//   const user = useSelector((state) => state.home.user);
-
-//   if (!user?.uid) {
-//     return (
-//       <Stack.Navigator initialRouteName="SignUp">
-//         <Stack.Screen name="SignUp" component={SignUp} />
-//         {/* <Stack.Screen name="Verification" component={Verification} /> */}
-//         <Stack.Screen name="Login" component={Login} />
-//       </Stack.Navigator>
-//     );
-//   }
-
-//   return (
-
-//     <Router>
-
-//       <div style={{ display: 'flex' }}>
-//         <Sidebar />
-//         <div style={{ flex: 1, padding: '20px' }}>
-//           <Routes>
-//             {/* <Route path="/SignUp" element={<SignUp/>} />*/}
-
-//             <Route path="/" element={<Home />} />
-
-// //                  <Route path="/Signup" element={<Signup />} />
-// //             <Route path="/about" element={<Login />} />
-// //             <Route path="/Orders" element={<Orders />} />
-// //             <Route path="/Financials" element={<Financials />} />
-// //             <Route path="/Payments" element={<Payments />} />
-// //             <Route path="/Inventory" element={<Inventory />} />
-// //             <Route path="/Employee" element={<Employee />} />
-// //             <Route path="/ChickenSales" element={<ChickenSales />} />
-// //             <Route path="/Setting" element={<Setting />} />
-
-//           </Routes>
-//         </div>
-//       </div>
-//     </Router>
-//   );
-// };
-// const App = () => {
-//   return (
-//     <SafeAreaView style={{ flex: 1, backgroundColor: "#fff" }}>
-//       <Provider store={store}>
-//         <PersistGate loading={null} persistor={persistor}>
-//           <RenderStack />
-//         </PersistGate>
-//       </Provider>
-//     </SafeAreaView>
-//   );
-// };
-
-// export default App;
-
-
-
-
-
 import { BrowserRouter, Routes, Route, Navigate } from "react-router-dom";
 import { useSelector } from "react-redux";
 import Sidebar from "./components/sidebar";
 
 import Login from "./pages/Login";
 import Home from "./pages/Home";
-import Orders from "./pages/Orders";
 
 import Signup from "./pages/Signup";
 
-import Financials from "./pages/Financials";
 import Setting from "./pages/Setting";
-import ChickenSales from "./pages/ChickenSales";
 
-import Inventory from "./pages/Inventory";
-import Payments from "./pages/Payments";
+
+// Feed Management
+import FeedPurchase from "./pages/FeedPurchase";
+import FeedUsage from "./pages/FeedUsage";
+import FeedInventory from "./pages/FeedInventory";
+
+// Medicine Management
+import MedicinePurchase from "./pages/MedicinePurchase";
+import MedicineUsage from "./pages/MedicineUsage";
+import MedicineInventory from "./pages/MedicineInventory";
+
+// Chicken Management
+import PurchaseChicken from "./pages/PurchaseChicken";
+import ChickenInventory from "./pages/ChickenInventory";
+import Orders from "./pages/Orders";
+import DailyChickenRate from "./pages/DailyChickenRate";
+
+// Invoice Management
+import Invoices from "./pages/Invoices";
+
+// Employee Management
 import Employee from "./pages/Employee";
 
-import ChickenPurchaseForm from "./pages/ChickenPurchaseForm";
-import ChickenPriceManagement from "./pages/ChickenPriceManagement";
-import ChickenPurchase from "./pages/ChickenPurchase";
-
-import EmployeeForm from "./pages/EmployeeForm";
-import EmployeeAttendanceForm from "./pages/EmployeeAttendanceForm";
-
-// import EmployeePaymentForm from "./pages/EmployeePaymentForm "
-//
-
-import EmployeePaymentForm from "./pages/EmployeePaymentForm";
-import ExpenseManagement from "./pages/ExpenseManagement";
 export default function App() {
   // get user from redux store
   const user = useSelector((state) => state.home.user);
@@ -182,19 +44,30 @@ export default function App() {
           <div style={{ flex: 1, padding: "20px", overflowY: "auto" }}>
             <Routes>
               <Route path="/" element={<Home />} />
-              <Route path="/Orders" element={<Orders />} />
-              <Route path="/Financials" element={<Financials />} />
-              <Route path="/Payments" element={<Payments />} />
-              <Route path="/Inventory" element={<Inventory />} />
-              <Route path="/Employee" element={<Employee />} />
-              <Route path="/ChickenSales" element={<ChickenSales />} />
-              <Route path="/ChickenPriceManagement" element={<ChickenPriceManagement />} />
-              <Route path="/ChickenPurchase" element={<ChickenPurchase />} />
-              <Route path="/ExpenseManagement" element={<ExpenseManagement />} />
               <Route path="/Setting" element={<Setting />} />
-              <Route path="/EmployeeForm" element={<EmployeeForm />} />
-              <Route path="/EmployeePaymentForm" element={<EmployeePaymentForm />} />
-              <Route path="/ChickenPurchaseForm" element={<ChickenPurchaseForm />} />
+              
+              {/* Employee Management */}
+              <Route path="/Employee" element={<Employee />} />
+              
+              {/* Feed Management Routes */}
+              <Route path="/FeedPurchase" element={<FeedPurchase />} />
+              <Route path="/FeedUsage" element={<FeedUsage />} />
+              <Route path="/FeedInventory" element={<FeedInventory />} />
+              
+              {/* Medicine Management Routes */}
+              <Route path="/MedicinePurchase" element={<MedicinePurchase />} />
+              <Route path="/MedicineUsage" element={<MedicineUsage />} />
+              <Route path="/MedicineInventory" element={<MedicineInventory />} />
+              
+              {/* Chicken Management Routes */}
+              <Route path="/PurchaseChicken" element={<PurchaseChicken />} />
+              <Route path="/ChickenInventory" element={<ChickenInventory />} />
+              <Route path="/Orders" element={<Orders />} />
+              <Route path="/DailyChickenRate" element={<DailyChickenRate />} />
+              
+              {/* Invoice Management */}
+              <Route path="/Invoices" element={<Invoices />} />
+              
             </Routes>
           </div>
         </div>

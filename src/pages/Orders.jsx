@@ -1,342 +1,574 @@
 import React, { useState, useEffect } from "react";
-import { HiOutlineCube } from "react-icons/hi2";
-import { FiPlus, FiEdit, FiTrash2, FiSearch, FiFilter, FiDownload, FiPrinter } from "react-icons/fi";
-import { getAllData, deleteData } from "../Helper/firebaseHelper";
-import OrderForm from "../components/OrderForm";
+import { collection, addDoc, getDocs, query, orderBy, Timestamp, doc, updateDoc, deleteDoc } from "firebase/firestore";
+import { db } from "../../firebase";
+import { toast } from "react-toastify";
+import "react-toastify/dist/ReactToastify.css";
 
 function Orders() {
   const [orders, setOrders] = useState([]);
-  const [loading, setLoading] = useState(true);
+  const [chickenInventory, setChickenInventory] = useState([]);
+  const [dailyRates, setDailyRates] = useState([]);
+  const [loading, setLoading] = useState(false);
   const [showForm, setShowForm] = useState(false);
-  const [editingOrder, setEditingOrder] = useState(null);
-  const [searchTerm, setSearchTerm] = useState('');
-  const [statusFilter, setStatusFilter] = useState('All');
-  const [dateFilter, setDateFilter] = useState('');
-  const [showFilters, setShowFilters] = useState(false);
+  const [searchTerm, setSearchTerm] = useState("");
+  const [statusFilter, setStatusFilter] = useState("All");
+  const [currentPage, setCurrentPage] = useState(1);
+  const itemsPerPage = 10;
+
+  const [formData, setFormData] = useState({
+    customerName: "",
+    customerPhone: "",
+    deliveryType: "delivery",
+    address: "",
+    breed: "",
+    quantitySold: "",
+    pricePerUnit: "",
+    totalAmount: 0,
+    orderStatus: "Pending",
+    saleDate: new Date().toISOString().split('T')[0],
+    invoiceId: ""
+  });
 
   useEffect(() => {
     loadOrders();
+    loadChickenInventory();
+    loadDailyRates();
   }, []);
+
+  useEffect(() => {
+    const qty = parseFloat(formData.quantitySold) || 0;
+    const price = parseFloat(formData.pricePerUnit) || 0;
+    setFormData(prev => ({ ...prev, totalAmount: (qty * price).toFixed(2) }));
+  }, [formData.quantitySold, formData.pricePerUnit]);
+
+  useEffect(() => {
+    // Auto-set price when breed is selected
+    if (formData.breed && dailyRates.length > 0) {
+      const latestRate = getLatestRateForBreed(formData.breed);
+      if (latestRate) {
+        setFormData(prev => ({ ...prev, pricePerUnit: latestRate.pricePerUnit }));
+      }
+    }
+  }, [formData.breed, dailyRates]);
 
   const loadOrders = async () => {
     try {
       setLoading(true);
-      const ordersData = await getAllData('orders');
-      setOrders(ordersData || []);
+      const q = query(collection(db, "orders"), orderBy("saleDate", "desc"));
+      const querySnapshot = await getDocs(q);
+      const data = [];
+      querySnapshot.forEach((doc) => {
+        data.push({ id: doc.id, ...doc.data() });
+      });
+      setOrders(data);
     } catch (error) {
-      console.error('Error loading orders:', error);
+      console.error("Error loading orders:", error);
+      toast.error("Failed to load orders");
     } finally {
       setLoading(false);
     }
   };
 
-  const handleDeleteOrder = async (orderId) => {
-    if (window.confirm('Are you sure you want to delete this order?')) {
-      try {
-        await deleteData('orders', orderId);
-        loadOrders();
-      } catch (error) {
-        console.error('Error deleting order:', error);
-        alert('Failed to delete order');
-      }
+  const loadChickenInventory = async () => {
+    try {
+      const { getAllData } = await import("../Helper/firebaseHelper");
+      const inventory = await getAllData("chickenInventory");
+      setChickenInventory(inventory);
+    } catch (error) {
+      console.error("Error loading inventory:", error);
     }
   };
 
-  const handleAddOrder = () => {
-    setEditingOrder(null);
-    setShowForm(true);
+  const loadDailyRates = async () => {
+    try {
+      const q = query(collection(db, "dailyChickenRate"), orderBy("date", "desc"));
+      const querySnapshot = await getDocs(q);
+      const data = [];
+      querySnapshot.forEach((doc) => {
+        data.push({ id: doc.id, ...doc.data() });
+      });
+      setDailyRates(data);
+    } catch (error) {
+      console.error("Error loading rates:", error);
+    }
   };
 
-  const handleFormSuccess = () => {
-    setShowForm(false);
-    loadOrders();
+  const getLatestRateForBreed = (breed) => {
+    if (dailyRates.length === 0) return null;
+    const ratesForBreed = dailyRates.filter(r => r.breed === breed);
+    if (ratesForBreed.length === 0) return null;
+    return ratesForBreed[0]; // Already sorted by date desc
   };
 
-  const handleCloseForm = () => {
-    setShowForm(false);
-    setEditingOrder(null);
+  const handleSubmit = async (e) => {
+    e.preventDefault();
+    try {
+      const selectedChicken = chickenInventory.find(ch => ch.breed === formData.breed);
+
+      if (!selectedChicken) {
+        toast.error("Please select a valid breed");
+        return;
+      }
+
+      const quantitySold = parseFloat(formData.quantitySold);
+      const availableStock = selectedChicken.totalInStock;
+
+      if (quantitySold > availableStock) {
+        toast.error(`Insufficient stock! Available: ${availableStock} chickens`);
+        return;
+      }
+
+      const orderId = `ORD-${Date.now().toString().slice(-6)}`;
+      const invoiceId = `INV-${Date.now().toString().slice(-6)}`;
+
+      const orderData = {
+        ...formData,
+        orderId,
+        invoiceId,
+        quantitySold: quantitySold,
+        pricePerUnit: parseFloat(formData.pricePerUnit),
+        totalAmount: parseFloat(formData.totalAmount),
+        saleDate: Timestamp.fromDate(new Date(formData.saleDate))
+      };
+
+      const docRef = await addDoc(collection(db, "orders"), orderData);
+      
+      // Update inventory
+      await updateChickenInventory(selectedChicken.id, quantitySold);
+      
+      // Create invoice
+      await createInvoice(invoiceId, "ChickenSale", docRef.id, orderData.totalAmount);
+      
+      // Create receipt
+      await createReceipt(orderData.totalAmount, docRef.id);
+
+      toast.success("Order placed successfully!");
+      
+      setFormData({
+        customerName: "",
+        customerPhone: "",
+        deliveryType: "delivery",
+        address: "",
+        breed: "",
+        quantitySold: "",
+        pricePerUnit: "",
+        totalAmount: 0,
+        orderStatus: "Pending",
+        saleDate: new Date().toISOString().split('T')[0],
+        invoiceId: ""
+      });
+      setShowForm(false);
+      loadOrders();
+    } catch (error) {
+      console.error("Error placing order:", error);
+      toast.error("Failed to place order");
+    }
   };
 
-  const handleOrderSuccess = () => {
-    loadOrders();
+  const updateChickenInventory = async (itemId, quantitySold) => {
+    try {
+      const { getDataById, updateData } = await import("../Helper/firebaseHelper");
+      const item = await getDataById("chickenInventory", itemId);
+      
+      if (item) {
+        const newStock = item.totalInStock - quantitySold;
+        await updateData("chickenInventory", itemId, {
+          totalInStock: Math.max(0, newStock),
+          lastUpdated: Timestamp.now()
+        });
+        
+        if (newStock < 50) {
+          toast.warning(`Low stock alert: ${item.breed} has ${newStock} chickens remaining`);
+        }
+      }
+    } catch (error) {
+      console.error("Error updating inventory:", error);
+    }
+  };
+
+  const createInvoice = async (invoiceId, type, referenceId, totalAmount) => {
+    try {
+      const { addData } = await import("../Helper/firebaseHelper");
+      await addData("invoices", {
+        invoiceId,
+        invoiceType: type,
+        referenceId,
+        date: Timestamp.now(),
+        totalAmount: parseFloat(totalAmount),
+        createdBy: "system"
+      });
+    } catch (error) {
+      console.error("Error creating invoice:", error);
+    }
+  };
+
+  const createReceipt = async (amount, referenceId) => {
+    try {
+      const { addData } = await import("../Helper/firebaseHelper");
+      await addData("receipts", {
+        referenceId: referenceId || `sale_${Date.now()}`,
+        description: "Chicken Sale",
+        amount: parseFloat(amount),
+        date: Timestamp.now(),
+        createdBy: "system"
+      });
+    } catch (error) {
+      console.error("Error creating receipt:", error);
+    }
+  };
+
+  const handleStatusUpdate = async (orderId, newStatus) => {
+    try {
+      const orderRef = doc(db, "orders", orderId);
+      await updateDoc(orderRef, { orderStatus: newStatus });
+      toast.success("Order status updated successfully!");
+      loadOrders();
+    } catch (error) {
+      console.error("Error updating status:", error);
+      toast.error("Failed to update order status");
+    }
+  };
+
+  const handleCancelOrder = async (order) => {
+    if (!window.confirm("Are you sure you want to cancel this order?")) return;
+
+    try {
+      // Restore inventory
+      const { getAllData, updateData } = await import("../Helper/firebaseHelper");
+      const inventory = await getAllData("chickenInventory");
+      const chickenItem = inventory.find(item => item.breed === order.breed);
+      
+      if (chickenItem) {
+        await updateData("chickenInventory", chickenItem.id, {
+          totalInStock: chickenItem.totalInStock + order.quantitySold,
+          lastUpdated: Timestamp.now()
+        });
+      }
+
+      // Delete order and related data
+      await deleteDoc(doc(db, "orders", order.id));
+      
+      toast.success("Order cancelled and inventory restored!");
+      loadOrders();
+    } catch (error) {
+      console.error("Error cancelling order:", error);
+      toast.error("Failed to cancel order");
+    }
   };
 
   const getStatusColor = (status) => {
-    switch (status) {
-      case 'Pending': return '#ff9800';
-      case 'Confirmed': return '#2196f3';
-      case 'Out for Delivery': return '#9c27b0';
-      case 'Delivered': return '#4caf50';
-      case 'Cancelled': return '#f44336';
-      default: return '#666';
-    }
-  };
-
-  const getPaymentColor = (payment) => {
-    switch (payment) {
-      case 'Paid': return '#4caf50';
-      case 'Unpaid': return '#f44336';
-      case 'Partial': return '#ff9800';
-      default: return '#666';
-    }
-  };
-
-  // Format currency
-  const formatCurrency = (amount) => {
-    return new Intl.NumberFormat('en-PK', {
-      style: 'currency',
-      currency: 'PKR'
-    }).format(amount);
+    const colors = {
+      Pending: "#ff9800",
+      Approved: "#2196f3",
+      Packed: "#9c27b0",
+      OutForDelivery: "#03a9f4",
+      Delivered: "#4caf50",
+      Cancelled: "#f44336"
+    };
+    return colors[status] || "#666";
   };
 
   const filteredOrders = orders.filter(order => {
-    const matchesSearch = order.customer?.toLowerCase().includes(searchTerm.toLowerCase()) ||
-                         order.orderid?.toLowerCase().includes(searchTerm.toLowerCase());
-    const matchesStatus = statusFilter === 'All' || order.status === statusFilter;
-    const matchesDate = !dateFilter || order.date === dateFilter;
-    
-    return matchesSearch && matchesStatus && matchesDate;
+    const matchesSearch = order.customerName?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         order.customerPhone?.includes(searchTerm) ||
+                         order.orderId?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+                         order.breed?.toLowerCase().includes(searchTerm.toLowerCase());
+    const matchesStatus = statusFilter === "All" || order.orderStatus === statusFilter;
+    return matchesSearch && matchesStatus;
   });
 
+  const paginatedOrders = filteredOrders.slice(
+    (currentPage - 1) * itemsPerPage,
+    currentPage * itemsPerPage
+  );
+
+  const totalPages = Math.ceil(filteredOrders.length / itemsPerPage);
+
+  const statusOptions = ["Pending", "Approved", "Packed", "OutForDelivery", "Delivered"];
+
   return (
-    <div style={{ position: 'relative', minHeight: '100vh' }}>
-      {showForm && (
-        <div style={{
-          position: 'fixed',
-          top: 0,
-          left: 0,
-          right: 0,
-          bottom: 0,
-          backgroundColor: 'rgba(0, 0, 0, 0.5)',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          zIndex: 1000
-        }}>
-          <OrderForm
-            order={editingOrder}
-            onSuccess={handleOrderSuccess}
-            onClose={handleCloseForm}
-          />
-        </div>
-      )}
-      <div style={{ display: "flex", alignItems: "center", gap: "10px" }}>
-        <span>
-          <HiOutlineCube />
-        </span>
-        <h4 style={{ margin: 0 }}>Poultry Management System</h4>
+    <div style={{ padding: "20px" }}>
+      <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
+        <h2>Chicken Orders Management</h2>
+        <button
+          onClick={() => setShowForm(!showForm)}
+          style={{
+            padding: "10px 20px",
+            backgroundColor: "#4CAF50",
+            color: "white",
+            border: "none",
+            borderRadius: 5,
+            cursor: "pointer",
+            fontSize: 16
+          }}
+        >
+          {showForm ? "Cancel" : "Place New Order"}
+        </button>
       </div>
 
-      <h3>Order Management</h3>
-
-      <div
-        style={{
-          width: '100%',
-          maxWidth: '1200px',
-          backgroundColor: "whitesmoke",
-          borderRadius: "10px",
-          padding: "20px",
-          marginBottom: "20px"
-        }}
-      >
-        <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "20px" }}>
-          <div>
-            <h4 style={{ margin: 0 }}>Orders</h4>
-            <p style={{ color: "grey", margin: "5px 0 0 0" }}>Manage and monitor your chicken delivery orders</p>
-          </div>
-          <button
-            onClick={handleAddOrder}
-            style={{
-              backgroundColor: "#007bff",
-              color: "white",
-              border: "none",
-              padding: "10px 20px",
-              borderRadius: "5px",
-              cursor: "pointer",
-              display: "flex",
-              alignItems: "center",
-              gap: "8px",
-              fontSize: "14px"
-            }}
-          >
-            <FiPlus size={16} />
-            Add New Order
-          </button>
-        </div>
-
-        <div style={{ display: "flex", gap: "10px", marginBottom: "20px", flexWrap: "wrap" }}>
-          <div style={{ position: "relative", flex: "1", minWidth: "300px" }}>
-            <FiSearch style={{ position: "absolute", left: "10px", top: "50%", transform: "translateY(-50%)", color: "#666" }} />
-            <input
-              type="text"
-              placeholder="Search by customer or order ID"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+      {showForm && (
+        <div style={{
+          backgroundColor: "#f5f5f5",
+          padding: 20,
+          borderRadius: 10,
+          marginBottom: 20,
+          boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+        }}>
+          <h3>Place New Order</h3>
+          <form onSubmit={handleSubmit}>
+            <div style={{ display: "grid", gridTemplateColumns: "1fr 1fr", gap: 15 }}>
+              <input
+                type="text"
+                placeholder="Customer Name"
+                value={formData.customerName}
+                onChange={(e) => setFormData({ ...formData, customerName: e.target.value })}
+                required
+                style={{ padding: 10, borderRadius: 5, border: "1px solid #ddd" }}
+              />
+              <input
+                type="text"
+                placeholder="Customer Phone"
+                value={formData.customerPhone}
+                onChange={(e) => setFormData({ ...formData, customerPhone: e.target.value })}
+                required
+                style={{ padding: 10, borderRadius: 5, border: "1px solid #ddd" }}
+              />
+              <select
+                value={formData.deliveryType}
+                onChange={(e) => setFormData({ ...formData, deliveryType: e.target.value })}
+                required
+                style={{ padding: 10, borderRadius: 5, border: "1px solid #ddd" }}
+              >
+                <option value="delivery">Delivery</option>
+                <option value="pickup">Pickup</option>
+              </select>
+              {formData.deliveryType === "delivery" && (
+                <input
+                  type="text"
+                  placeholder="Delivery Address"
+                  value={formData.address}
+                  onChange={(e) => setFormData({ ...formData, address: e.target.value })}
+                  required
+                  style={{ padding: 10, borderRadius: 5, border: "1px solid #ddd" }}
+                />
+              )}
+              <select
+                value={formData.breed}
+                onChange={(e) => setFormData({ ...formData, breed: e.target.value })}
+                required
+                style={{ padding: 10, borderRadius: 5, border: "1px solid #ddd" }}
+              >
+                <option value="">Select Breed</option>
+                {chickenInventory.map((ch) => (
+                  <option key={ch.id} value={ch.breed}>
+                    {ch.breed} ({ch.totalInStock} available)
+                  </option>
+                ))}
+              </select>
+              <input
+                type="number"
+                step="1"
+                placeholder="Quantity"
+                value={formData.quantitySold}
+                onChange={(e) => setFormData({ ...formData, quantitySold: e.target.value })}
+                required
+                style={{ padding: 10, borderRadius: 5, border: "1px solid #ddd" }}
+              />
+              <input
+                type="number"
+                step="0.01"
+                placeholder="Price Per Unit (Auto)"
+                value={formData.pricePerUnit}
+                onChange={(e) => setFormData({ ...formData, pricePerUnit: e.target.value })}
+                required
+                style={{ padding: 10, borderRadius: 5, border: "1px solid #ddd" }}
+              />
+              <input
+                type="text"
+                placeholder="Total Amount (Auto)"
+                value={formData.totalAmount}
+                readOnly
+                style={{ padding: 10, borderRadius: 5, border: "1px solid #ddd", backgroundColor: "#e9e9e9" }}
+              />
+            </div>
+            <button
+              type="submit"
               style={{
-                width: "100%",
-                height: "40px",
-                borderRadius: "10px",
-                border: "1px solid #ddd",
-                paddingLeft: "35px",
-                fontSize: "14px"
+                padding: "10px 30px",
+                backgroundColor: "#2196F3",
+                color: "white",
+                border: "none",
+                borderRadius: 5,
+                cursor: "pointer",
+                marginTop: 15,
+                fontSize: 16
               }}
-            />
-          </div>
-
-          <input
-            type="date"
-            value={dateFilter}
-            onChange={(e) => setDateFilter(e.target.value)}
-            style={{
-              height: "40px",
-              borderRadius: "10px",
-              border: "1px solid #ddd",
-              padding: "0 10px",
-              fontSize: "14px"
-            }}
-          />
-
-          <select
-            value={statusFilter}
-            onChange={(e) => setStatusFilter(e.target.value)}
-            style={{
-              height: "40px",
-              borderRadius: "10px",
-              border: "1px solid #ddd",
-              padding: "0 10px",
-              fontSize: "14px",
-              minWidth: "150px"
-            }}
-          >
-            <option value="All">All Orders</option>
-            <option value="Pending">Pending</option>
-            <option value="Confirmed">Confirmed</option>
-            <option value="Out for Delivery">Out for Delivery</option>
-            <option value="Delivered">Delivered</option>
-            <option value="Cancelled">Cancelled</option>
-          </select>
+            >
+              Place Order
+            </button>
+          </form>
         </div>
+      )}
 
-        {loading ? (
-          <div style={{ textAlign: "center", padding: "40px" }}>
-            <p>Loading orders...</p>
-          </div>
-        ) : (
+      <div style={{ display: "grid", gridTemplateColumns: "1fr 200px", gap: 15, marginBottom: 20 }}>
+        <input
+          type="text"
+          placeholder="Search by customer, phone, order ID, or breed..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+          style={{
+            width: "100%",
+            padding: 10,
+            borderRadius: 5,
+            border: "1px solid #ddd"
+          }}
+        />
+        <select
+          value={statusFilter}
+          onChange={(e) => setStatusFilter(e.target.value)}
+          style={{
+            padding: 10,
+            borderRadius: 5,
+            border: "1px solid #ddd"
+          }}
+        >
+          <option value="All">All Status</option>
+          {statusOptions.map(status => (
+            <option key={status} value={status}>{status}</option>
+          ))}
+        </select>
+      </div>
+
+      {loading ? (
+        <div style={{ textAlign: "center", padding: 40 }}>Loading...</div>
+      ) : (
+        <>
           <div style={{ overflowX: "auto" }}>
-            <table style={{ width: "100%", borderCollapse: "collapse", backgroundColor: "white", borderRadius: "8px", overflow: "hidden" }}>
+            <table style={{ width: "100%", borderCollapse: "collapse", backgroundColor: "white" }}>
               <thead>
-                <tr style={{ backgroundColor: "#f8f9fa" }}>
-                  <th style={{ padding: "12px", textAlign: "left", borderBottom: "1px solid #dee2e6", fontWeight: "600" }}>Order ID</th>
-                  <th style={{ padding: "12px", textAlign: "left", borderBottom: "1px solid #dee2e6", fontWeight: "600" }}>Customer</th>
-                  <th style={{ padding: "12px", textAlign: "left", borderBottom: "1px solid #dee2e6", fontWeight: "600" }}>Date</th>
-                  <th style={{ padding: "12px", textAlign: "left", borderBottom: "1px solid #dee2e6", fontWeight: "600" }}>Chicken in Kg</th>
-                  <th style={{ padding: "12px", textAlign: "left", borderBottom: "1px solid #dee2e6", fontWeight: "600" }}>Amount</th>
-                  <th style={{ padding: "12px", textAlign: "left", borderBottom: "1px solid #dee2e6", fontWeight: "600" }}>Status</th>
-                  <th style={{ padding: "12px", textAlign: "left", borderBottom: "1px solid #dee2e6", fontWeight: "600" }}>Payment</th>
-                  <th style={{ padding: "12px", textAlign: "center", borderBottom: "1px solid #dee2e6", fontWeight: "600" }}>Actions</th>
+                <tr style={{ backgroundColor: "#4CAF50", color: "white" }}>
+                  <th style={{ padding: 12, textAlign: "left" }}>Order ID</th>
+                  <th style={{ padding: 12, textAlign: "left" }}>Customer</th>
+                  <th style={{ padding: 12, textAlign: "left" }}>Breed</th>
+                  <th style={{ padding: 12, textAlign: "right" }}>Qty</th>
+                  <th style={{ padding: 12, textAlign: "right" }}>Total</th>
+                  <th style={{ padding: 12, textAlign: "left" }}>Delivery</th>
+                  <th style={{ padding: 12, textAlign: "left" }}>Status</th>
+                  <th style={{ padding: 12, textAlign: "center" }}>Actions</th>
                 </tr>
               </thead>
               <tbody>
-                {filteredOrders.length === 0 ? (
-                  <tr>
-                    <td colSpan="8" style={{ padding: "40px", textAlign: "center", color: "#666" }}>
-                      {orders.length === 0 ? "No orders found. Create your first order!" : "No orders match your search criteria."}
+                {paginatedOrders.map((order) => (
+                  <tr key={order.id} style={{ borderBottom: "1px solid #ddd" }}>
+                    <td style={{ padding: 12 }}>{order.orderId}</td>
+                    <td style={{ padding: 12 }}>
+                      {order.customerName}
+                      <br />
+                      <small style={{ color: "#666" }}>{order.customerPhone}</small>
+                    </td>
+                    <td style={{ padding: 12 }}>{order.breed}</td>
+                    <td style={{ padding: 12, textAlign: "right" }}>{order.quantitySold}</td>
+                    <td style={{ padding: 12, textAlign: "right", fontWeight: "bold" }}>
+                      ${order.totalAmount?.toFixed(2)}
+                    </td>
+                    <td style={{ padding: 12 }}>
+                      {order.deliveryType === "delivery" ? "🚚 Delivery" : "🏠 Pickup"}
+                      {order.deliveryType === "delivery" && order.address && (
+                        <>
+                          <br /><small style={{ color: "#666" }}>{order.address.substring(0, 30)}...</small>
+                        </>
+                      )}
+                    </td>
+                    <td style={{ padding: 12 }}>
+                      <select
+                        value={order.orderStatus}
+                        onChange={(e) => handleStatusUpdate(order.id, e.target.value)}
+                        disabled={order.orderStatus === "Cancelled" || order.orderStatus === "Delivered"}
+                        style={{
+                          padding: "5px 10px",
+                          borderRadius: 5,
+                          border: "1px solid #ddd",
+                          backgroundColor: getStatusColor(order.orderStatus),
+                          color: "white",
+                          fontWeight: "bold",
+                          cursor: "pointer"
+                        }}
+                      >
+                        {statusOptions.map(status => (
+                          <option key={status} value={status}>{status}</option>
+                        ))}
+                      </select>
+                    </td>
+                    <td style={{ padding: 12, textAlign: "center" }}>
+                      {order.orderStatus !== "Cancelled" && (
+                        <button
+                          onClick={() => handleCancelOrder(order)}
+                          style={{
+                            padding: "5px 10px",
+                            backgroundColor: "#f44336",
+                            color: "white",
+                            border: "none",
+                            borderRadius: 3,
+                            cursor: "pointer",
+                            fontSize: 12
+                          }}
+                        >
+                          Cancel
+                        </button>
+                      )}
                     </td>
                   </tr>
-                ) : (
-                  filteredOrders.map((order) => (
-                    <tr key={order.id} style={{ borderBottom: "1px solid #f0f0f0" }}>
-                      <td style={{ padding: "12px", fontWeight: "500" }}>{order.orderid}</td>
-                      <td style={{ padding: "12px" }}>{order.customer}</td>
-                      <td style={{ padding: "12px" }}>{order.date}</td>
-                      <td style={{ padding: "12px", fontWeight: "500", color: "#ff9800" }}>{order.chickenInKg} kg</td>
-                      <td style={{ padding: "12px", fontWeight: "500" }}>{formatCurrency(order.amount || 0)}</td>
-                      <td style={{ padding: "12px" }}>
-                        <span
-                          style={{
-                            backgroundColor: getStatusColor(order.status),
-                            color: "white",
-                            padding: "4px 8px",
-                            borderRadius: "12px",
-                            fontSize: "12px",
-                            fontWeight: "500"
-                          }}
-                        >
-                          {order.status}
-                        </span>
-                      </td>
-                      <td style={{ padding: "12px" }}>
-                        <span
-                          style={{
-                            backgroundColor: getPaymentColor(order.payments),
-                            color: "white",
-                            padding: "4px 8px",
-                            borderRadius: "12px",
-                            fontSize: "12px",
-                            fontWeight: "500"
-                          }}
-                        >
-                          {order.payments}
-                        </span>
-                      </td>
-                      <td style={{ padding: "12px", textAlign: "center" }}>
-                        <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
-                          <button
-                            onClick={() => handleEditOrder(order)}
-                            style={{
-                              backgroundColor: "#007bff",
-                              color: "white",
-                              border: "none",
-                              padding: "6px 10px",
-                              borderRadius: "4px",
-                              cursor: "pointer",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "4px",
-                              fontSize: "12px"
-                            }}
-                          >
-                            <FiEdit size={12} />
-                            Edit
-                          </button>
-                          <button
-                            onClick={() => handleDeleteOrder(order.id)}
-                            style={{
-                              backgroundColor: "#dc3545",
-                              color: "white",
-                              border: "none",
-                              padding: "6px 10px",
-                              borderRadius: "4px",
-                              cursor: "pointer",
-                              display: "flex",
-                              alignItems: "center",
-                              gap: "4px",
-                              fontSize: "12px"
-                            }}
-                          >
-                            <FiTrash2 size={12} />
-                            Delete
-                          </button>
-                        </div>
-                      </td>
-                    </tr>
-                  ))
-                )}
+                ))}
               </tbody>
             </table>
           </div>
-        )}
-      </div>
 
-      {showForm && (
-        <OrderForm
-          orderId={editingOrder}
-          onClose={handleCloseForm}
-          onSuccess={handleFormSuccess}
-        />
+          {filteredOrders.length === 0 && (
+            <div style={{ textAlign: "center", padding: 40, color: "#666" }}>
+              No orders found
+            </div>
+          )}
+
+          {totalPages > 1 && (
+            <div style={{ display: "flex", justifyContent: "center", marginTop: 20, gap: 10 }}>
+              <button
+                onClick={() => setCurrentPage(prev => Math.max(1, prev - 1))}
+                disabled={currentPage === 1}
+                style={{
+                  padding: "8px 15px",
+                  backgroundColor: currentPage === 1 ? "#ccc" : "#2196F3",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 5,
+                  cursor: currentPage === 1 ? "not-allowed" : "pointer"
+                }}
+              >
+                Previous
+              </button>
+              <span style={{ padding: 8 }}>
+                Page {currentPage} of {totalPages}
+              </span>
+              <button
+                onClick={() => setCurrentPage(prev => Math.min(totalPages, prev + 1))}
+                disabled={currentPage === totalPages}
+                style={{
+                  padding: "8px 15px",
+                  backgroundColor: currentPage === totalPages ? "#ccc" : "#2196F3",
+                  color: "white",
+                  border: "none",
+                  borderRadius: 5,
+                  cursor: currentPage === totalPages ? "not-allowed" : "pointer"
+                }}
+              >
+                Next
+              </button>
+            </div>
+          )}
+        </>
       )}
     </div>
   );
 }
 
 export default Orders;
+

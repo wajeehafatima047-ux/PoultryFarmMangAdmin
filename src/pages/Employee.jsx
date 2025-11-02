@@ -6,7 +6,7 @@ import "react-tabs/style/react-tabs.css";
 import { getAllData, deleteData } from "../Helper/firebaseHelper";
 import EmployeeForm from "./EmployeeForm";
 import EmployeeAttendanceForm from "./EmployeeAttendanceForm";
-import EmployeePayrollForm from "./EmployeePayrollForm";
+import EmployeePaymentForm from "./EmployeePaymentForm";
 
 function Employee() {
   const [employees, setEmployees] = useState([]);
@@ -207,7 +207,7 @@ function Employee() {
   const loadPayroll = async () => {
     try {
       setLoading(true);
-      const payrollData = await getAllData('payroll');
+      const payrollData = await getAllData('salaryPayments');
       setPayroll(payrollData || []);
     } catch (error) {
       console.error('Error loading payroll:', error);
@@ -228,13 +228,13 @@ function Employee() {
 
   const handleDeletePayroll = async (payrollId) => {
     const payrollRecord = payroll.find(pay => pay.id === payrollId);
-    const employee = employees.find(emp => emp.id === payrollRecord?.employee);
+    const employee = employees.find(emp => emp.id === payrollRecord?.employeeId || emp.id === payrollRecord?.employee);
     const employeeName = employee?.employee || employee?.name || 'this employee';
     
     if (window.confirm(`Are you sure you want to delete payroll record for ${employeeName}?`)) {
       try {
         setLoading(true);
-        await deleteData('payroll', payrollId);
+        await deleteData('salaryPayments', payrollId);
         loadPayroll();
       } catch (error) {
         console.error('Error deleting payroll:', error);
@@ -796,47 +796,30 @@ function Employee() {
                     <thead>
                       <tr style={{ backgroundColor: "#f8f9fa" }}>
                         <th style={{ padding: "12px", textAlign: "left", borderBottom: "1px solid #dee2e6", fontWeight: "600" }}>Employee</th>
-                        <th style={{ padding: "12px", textAlign: "left", borderBottom: "1px solid #dee2e6", fontWeight: "600" }}>Position</th>
-                        <th style={{ padding: "12px", textAlign: "left", borderBottom: "1px solid #dee2e6", fontWeight: "600" }}>Base Salary</th>
-                        <th style={{ padding: "12px", textAlign: "left", borderBottom: "1px solid #dee2e6", fontWeight: "600" }}>Working Days</th>
-                        <th style={{ padding: "12px", textAlign: "left", borderBottom: "1px solid #dee2e6", fontWeight: "600" }}>Bonus</th>
-                        <th style={{ padding: "12px", textAlign: "left", borderBottom: "1px solid #dee2e6", fontWeight: "600" }}>Deduction</th>
-                        <th style={{ padding: "12px", textAlign: "left", borderBottom: "1px solid #dee2e6", fontWeight: "600" }}>Net Salary</th>
-                        <th style={{ padding: "12px", textAlign: "left", borderBottom: "1px solid #dee2e6", fontWeight: "600" }}>Status</th>
+                        <th style={{ padding: "12px", textAlign: "left", borderBottom: "1px solid #dee2e6", fontWeight: "600" }}>Salary Month</th>
+                        <th style={{ padding: "12px", textAlign: "left", borderBottom: "1px solid #dee2e6", fontWeight: "600" }}>Amount</th>
+                        <th style={{ padding: "12px", textAlign: "left", borderBottom: "1px solid #dee2e6", fontWeight: "600" }}>Payment Method</th>
+                        <th style={{ padding: "12px", textAlign: "left", borderBottom: "1px solid #dee2e6", fontWeight: "600" }}>Payment Date</th>
+                        <th style={{ padding: "12px", textAlign: "left", borderBottom: "1px solid #dee2e6", fontWeight: "600" }}>Invoice ID</th>
                         <th style={{ padding: "12px", textAlign: "center", borderBottom: "1px solid #dee2e6", fontWeight: "600" }}>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {filteredPayroll.length === 0 ? (
                         <tr>
-                          <td colSpan="9" style={{ padding: "40px", textAlign: "center", color: "#666" }}>
+                          <td colSpan="7" style={{ padding: "40px", textAlign: "center", color: "#666" }}>
                             {payroll.length === 0 ? "No payroll records found. Add your first payroll record!" : "No payroll records match your search criteria."}
                           </td>
                         </tr>
                       ) : (
                         filteredPayroll.map((record) => (
                           <tr key={record.id} style={{ borderBottom: "1px solid #f0f0f0" }}>
-                            <td style={{ padding: "12px", fontWeight: "500" }}>{getEmployeeName(record.employee)}</td>
-                            <td style={{ padding: "12px" }}>{record.position}</td>
-                            <td style={{ padding: "12px", fontWeight: "500" }}>{formatCurrency(record.baseSalary || 0)}</td>
-                            <td style={{ padding: "12px" }}>{record.workingDay} days</td>
-                            <td style={{ padding: "12px", color: "#4caf50", fontWeight: "500" }}>{formatCurrency(record.bonus || 0)}</td>
-                            <td style={{ padding: "12px", color: "#f44336", fontWeight: "500" }}>{formatCurrency(record.deduction || 0)}</td>
-                            <td style={{ padding: "12px", fontWeight: "bold", color: "#007bff" }}>{formatCurrency(record.netSalary || 0)}</td>
-                            <td style={{ padding: "12px" }}>
-                              <span
-                                style={{
-                                  backgroundColor: getPayrollStatusColor(record.status),
-                                  color: "white",
-                                  padding: "4px 8px",
-                                  borderRadius: "12px",
-                                  fontSize: "12px",
-                                  fontWeight: "500"
-                                }}
-                              >
-                                {record.status}
-                              </span>
-                            </td>
+                            <td style={{ padding: "12px", fontWeight: "500" }}>{record.employeeName || getEmployeeName(record.employeeId || record.employee)}</td>
+                            <td style={{ padding: "12px" }}>{record.salaryMonth || "N/A"}</td>
+                            <td style={{ padding: "12px", fontWeight: "bold", color: "#007bff" }}>{formatCurrency(record.amount || 0)}</td>
+                            <td style={{ padding: "12px" }}>{record.paymentMethod || "N/A"}</td>
+                            <td style={{ padding: "12px" }}>{formatDate(record.paymentDate)}</td>
+                            <td style={{ padding: "12px", color: "#666", fontSize: "12px" }}>{record.invoiceId || "Not Generated"}</td>
                             <td style={{ padding: "12px", textAlign: "center" }}>
                               <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
                                 <button
@@ -906,7 +889,7 @@ function Employee() {
       )}
 
       {showPayrollForm && (
-        <EmployeePayrollForm
+        <EmployeePaymentForm
           payrollId={editingPayroll}
           onClose={handleClosePayrollForm}
           onSuccess={handlePayrollFormSuccess}
