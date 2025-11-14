@@ -32,6 +32,9 @@ import Invoices from "./pages/Invoices";
 // Employee Management
 import Employee from "./pages/Employee";
 
+// Feature Management
+import FeatureManagement from "./pages/FeatureManagement";
+
 export default function App() {
   // get user from redux store
   const user = useSelector((state) => state.home.user);
@@ -67,6 +70,9 @@ export default function App() {
               
               {/* Invoice Management */}
               <Route path="/Invoices" element={<Invoices />} />
+              
+              {/* Feature Management */}
+              <Route path="/FeatureManagement" element={<FeatureManagement />} />
               
             </Routes>
           </div>

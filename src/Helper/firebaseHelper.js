@@ -159,3 +159,35 @@ export const logout = async () => {
     throw error;
   }
 };
+
+// Upload image to Cloudinary (Web version - accepts File object)
+export const uploadImageToCloudinary = async (file) => {
+  const CLOUD_NAME = "dhy6slhyb";
+  const UPLOAD_PRESET = "images";
+
+  try {
+    const formData = new FormData();
+    formData.append("file", file);
+    formData.append("upload_preset", UPLOAD_PRESET);
+
+    const res = await fetch(
+      `https://api.cloudinary.com/v1_1/${CLOUD_NAME}/image/upload`,
+      {
+        method: "POST",
+        body: formData,
+      }
+    );
+
+    if (!res.ok) {
+      throw new Error(`Upload failed: ${res.statusText}`);
+    }
+
+    const result = await res.json();
+    return result.secure_url; // 🔥 Cloudinary hosted URL
+  } catch (err) {
+    console.error("Cloudinary upload failed", err);
+    throw err;
+  }
+};
+
+

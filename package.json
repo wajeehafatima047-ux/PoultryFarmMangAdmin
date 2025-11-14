@@ -13,6 +13,7 @@
     "@heroicons/react": "^2.2.0",
     "@reduxjs/toolkit": "^2.9.0",
     "chart": "^0.1.2",
+    "cloudinary": "^2.8.0",
     "firebase": "^12.3.0",
     "framer-motion": "^12.23.24",
     "react": "^19.1.0",
