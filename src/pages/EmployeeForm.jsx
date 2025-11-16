@@ -6,6 +6,7 @@ const EmployeeForm = ({ employeeId, onClose, onSuccess }) => {
     employee: '',
     position: '',
     contact: '',
+    cnic: '',
     joiningDate: new Date().toISOString().split('T')[0],
     salary: '',
     status: 'Active'
@@ -40,6 +41,7 @@ const EmployeeForm = ({ employeeId, onClose, onSuccess }) => {
           employee: employeeData.employee || employeeData.name || '',
           position: employeeData.position || employeeData.role || '',
           contact: employeeData.contact || employeeData.phone || '',
+          cnic: employeeData.cnic || '',
           joiningDate: employeeData.joiningDate || employeeData.joinDate || new Date().toISOString().split('T')[0],
           salary: employeeData.salary || '',
           status: employeeData.status || 'Active'
@@ -71,6 +73,7 @@ const EmployeeForm = ({ employeeId, onClose, onSuccess }) => {
         employee: formData.employee,
         position: formData.position,
         contact: formData.contact,
+        cnic: formData.cnic,
         joiningDate: formData.joiningDate,
         salary: parseFloat(formData.salary) || 0,
         status: formData.status,
@@ -214,12 +217,12 @@ const EmployeeForm = ({ employeeId, onClose, onSuccess }) => {
               <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
                 Contact:
               </label>
-          <input
-            type="tel"
+              <input
+                type="tel"
                 name="contact"
                 value={formData.contact}
                 onChange={handleInputChange}
-            required
+                required
                 style={{
                   width: '100%',
                   padding: '10px',
@@ -231,6 +234,29 @@ const EmployeeForm = ({ employeeId, onClose, onSuccess }) => {
               />
             </div>
 
+            <div>
+              <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
+                CNIC Number:
+              </label>
+              <input
+                type="text"
+                name="cnic"
+                value={formData.cnic}
+                onChange={handleInputChange}
+                required
+                style={{
+                  width: '100%',
+                  padding: '10px',
+                  border: '1px solid #ddd',
+                  borderRadius: '5px',
+                  fontSize: '14px'
+                }}
+                placeholder="Enter CNIC number (e.g., 12345-1234567-1)"
+              />
+            </div>
+          </div>
+
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '15px' }}>
             <div>
               <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
                 Joining Date:
@@ -250,9 +276,7 @@ const EmployeeForm = ({ employeeId, onClose, onSuccess }) => {
                 }}
               />
             </div>
-          </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '20px' }}>
             <div>
               <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
                 Salary ($):
@@ -275,7 +299,9 @@ const EmployeeForm = ({ employeeId, onClose, onSuccess }) => {
                 placeholder="0.00"
               />
             </div>
+          </div>
 
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '15px', marginBottom: '20px' }}>
             <div>
               <label style={{ display: 'block', marginBottom: '5px', fontWeight: 'bold' }}>
                 Status:
@@ -295,7 +321,7 @@ const EmployeeForm = ({ employeeId, onClose, onSuccess }) => {
                 {statusOptions.map(status => (
                   <option key={status} value={status}>{status}</option>
                 ))}
-          </select>
+              </select>
             </div>
           </div>
 

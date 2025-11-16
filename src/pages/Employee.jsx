@@ -45,7 +45,8 @@ function Employee() {
         (employee.employee || employee.name || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (employee.employeeId || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
         (employee.position || employee.role || '').toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (employee.contact || employee.phone || '').includes(searchTerm)
+        (employee.contact || employee.phone || '').includes(searchTerm) ||
+        (employee.cnic || '').includes(searchTerm)
       );
     }
     
@@ -432,6 +433,7 @@ function Employee() {
                         <th style={{ padding: "15px", textAlign: "left", borderBottom: "1px solid #ddd" }}>Employee</th>
                         <th style={{ padding: "15px", textAlign: "left", borderBottom: "1px solid #ddd" }}>Position</th>
                         <th style={{ padding: "15px", textAlign: "left", borderBottom: "1px solid #ddd" }}>Contact</th>
+                        <th style={{ padding: "15px", textAlign: "left", borderBottom: "1px solid #ddd" }}>CNIC</th>
                         <th style={{ padding: "15px", textAlign: "left", borderBottom: "1px solid #ddd" }}>Joining Date</th>
                         <th style={{ padding: "15px", textAlign: "left", borderBottom: "1px solid #ddd" }}>Salary</th>
                         <th style={{ padding: "15px", textAlign: "left", borderBottom: "1px solid #ddd" }}>Status</th>
@@ -441,7 +443,7 @@ function Employee() {
                     <tbody>
                       {filteredEmployees.length === 0 ? (
                         <tr>
-                          <td colSpan="8" style={{ padding: "20px", textAlign: "center", color: "#666" }}>
+                          <td colSpan="10" style={{ padding: "20px", textAlign: "center", color: "#666" }}>
                             {employees.length === 0 ? "No employees found. Add your first employee!" : "No employees match your search."}
                           </td>
                         </tr>
@@ -466,6 +468,7 @@ function Employee() {
                               </span>
                             </td>
                             <td style={{ padding: "15px" }}>{employee.contact || employee.phone}</td>
+                            <td style={{ padding: "15px" }}>{employee.cnic || '-'}</td>
                             <td style={{ padding: "15px" }}>{formatDate(employee.joiningDate || employee.joinDate)}</td>
                             <td style={{ padding: "15px" }}>{formatCurrency(employee.salary)}</td>
                             <td style={{ padding: "15px" }}>
@@ -481,42 +484,42 @@ function Employee() {
                             </td>
                             <td style={{ padding: "15px", textAlign: "center" }}>
                               <div style={{ display: "flex", gap: "8px", justifyContent: "center" }}>
-                              <button
+                                <button
                                   onClick={() => handleEditEmployee(employee)}
-                                style={{
+                                  style={{
                                     backgroundColor: "#007bff",
-                                  color: "white",
-                                  border: "none",
+                                    color: "white",
+                                    border: "none",
                                     padding: "6px 10px",
                                     borderRadius: "4px",
-                                  cursor: "pointer",
+                                    cursor: "pointer",
                                     display: "flex",
                                     alignItems: "center",
                                     gap: "4px",
-                                  fontSize: "12px"
-                                }}
-                              >
+                                    fontSize: "12px"
+                                  }}
+                                >
                                   <FiEdit size={12} />
                                   Edit
-                              </button>
-                              <button
+                                </button>
+                                <button
                                   onClick={() => handleDeleteEmployee(employee.id)}
-                                style={{
-                                  backgroundColor: "#dc3545",
-                                  color: "white",
-                                  border: "none",
+                                  style={{
+                                    backgroundColor: "#dc3545",
+                                    color: "white",
+                                    border: "none",
                                     padding: "6px 10px",
                                     borderRadius: "4px",
-                                  cursor: "pointer",
+                                    cursor: "pointer",
                                     display: "flex",
                                     alignItems: "center",
                                     gap: "4px",
-                                  fontSize: "12px"
-                                }}
-                              >
+                                    fontSize: "12px"
+                                  }}
+                                >
                                   <FiTrash2 size={12} />
                                   Delete
-                              </button>
+                                </button>
                               </div>
                             </td>
                           </tr>
