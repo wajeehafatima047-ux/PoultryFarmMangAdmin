@@ -8,6 +8,7 @@ import { IoMdArrowDropdown, IoMdArrowDropup } from "react-icons/io";
 import { BiSolidFoodMenu } from "react-icons/bi";
 import { MdLocalPharmacy } from "react-icons/md";
 import { MdFeaturedPlayList } from "react-icons/md";
+import { MdAttachMoney } from "react-icons/md";
 
 export default function Sidebar() {
   const [feedOpen, setFeedOpen] = useState(false);
@@ -98,6 +99,33 @@ export default function Sidebar() {
           >
             <FaPerson size={20} style={{ marginRight: 12 }} />
             <span style={{ fontSize: "15px", fontWeight: "500" }}>Employee</span>
+          </a>
+        </li>
+
+        {/* Other Expenses */}
+        <li style={{ listStyleType: "none" }}>
+          <a 
+            href="OtherExpenses" 
+            style={{ 
+              display: "flex",
+              alignItems: "center",
+              padding: "12px 20px",
+              color: "white",
+              textDecoration: "none",
+              transition: "all 0.3s ease",
+              borderRadius: "0 25px 25px 0",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#34495e";
+              e.currentTarget.style.paddingLeft = "25px";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent";
+              e.currentTarget.style.paddingLeft = "20px";
+            }}
+          >
+            <MdAttachMoney size={20} style={{ marginRight: 12 }} />
+            <span style={{ fontSize: "15px", fontWeight: "500" }}>Other Expenses</span>
           </a>
         </li>
 

@@ -35,6 +35,9 @@ import Employee from "./pages/Employee";
 // Feature Management
 import FeatureManagement from "./pages/FeatureManagement";
 
+// Other Expenses
+import OtherExpenses from "./pages/OtherExpenses";
+
 export default function App() {
   // get user from redux store
   const user = useSelector((state) => state.home.user);
@@ -51,6 +54,9 @@ export default function App() {
               
               {/* Employee Management */}
               <Route path="/Employee" element={<Employee />} />
+              
+              {/* Other Expenses */}
+              <Route path="/OtherExpenses" element={<OtherExpenses />} />
               
               {/* Feed Management Routes */}
               <Route path="/FeedPurchase" element={<FeedPurchase />} />
