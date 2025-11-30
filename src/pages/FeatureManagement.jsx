@@ -17,6 +17,9 @@ function FeatureManagement() {
   const [formData, setFormData] = useState({
     title: "",
     image: "",
+    breed: "",
+    pricePerUnit: "",
+    date: new Date().toISOString().split('T')[0],
   });
 
   // Filter features based on search term
@@ -52,7 +55,13 @@ function FeatureManagement() {
 
   const handleAddFeature = () => {
     setEditingFeature(null);
-    setFormData({ title: "", image: "" });
+    setFormData({ 
+      title: "", 
+      image: "",
+      breed: "",
+      pricePerUnit: "",
+      date: new Date().toISOString().split('T')[0],
+    });
     setImagePreview(null);
     setShowForm(true);
   };
@@ -62,6 +71,9 @@ function FeatureManagement() {
     setFormData({
       title: feature.title || "",
       image: feature.image || "",
+      breed: feature.breed || "",
+      pricePerUnit: feature.pricePerUnit || "",
+      date: feature.date ? (typeof feature.date === 'string' ? feature.date : new Date(feature.date).toISOString().split('T')[0]) : new Date().toISOString().split('T')[0],
     });
     setImagePreview(feature.image || null);
     setShowForm(true);
@@ -159,9 +171,16 @@ function FeatureManagement() {
       const featureData = {
         title: formData.title.trim(),
         image: formData.image,
-        createdAt: editingFeature ? undefined : new Date().toISOString(),
+        breed: formData.breed.trim() || "",
+        pricePerUnit: formData.pricePerUnit ? parseFloat(formData.pricePerUnit) : "",
+        date: formData.date || new Date().toISOString().split('T')[0],
         updatedAt: new Date().toISOString()
       };
+
+      // Only add createdAt for new features
+      if (!editingFeature) {
+        featureData.createdAt = new Date().toISOString();
+      }
 
       if (editingFeature) {
         await updateData("features", editingFeature, featureData);
@@ -172,7 +191,13 @@ function FeatureManagement() {
       }
 
       setShowForm(false);
-      setFormData({ title: "", image: "" });
+      setFormData({ 
+        title: "", 
+        image: "",
+        breed: "",
+        pricePerUnit: "",
+        date: new Date().toISOString().split('T')[0],
+      });
       setImagePreview(null);
       loadFeatures();
     } catch (error) {
@@ -186,7 +211,13 @@ function FeatureManagement() {
   const handleCloseForm = () => {
     setShowForm(false);
     setEditingFeature(null);
-    setFormData({ title: "", image: "" });
+    setFormData({ 
+      title: "", 
+      image: "",
+      breed: "",
+      pricePerUnit: "",
+      date: new Date().toISOString().split('T')[0],
+    });
     setImagePreview(null);
   };
 
@@ -323,6 +354,33 @@ function FeatureManagement() {
                   }}>
                     {feature.title}
                   </h3>
+
+                  {/* Chicken Rate Info */}
+                  {(feature.breed || feature.pricePerUnit) && (
+                    <div style={{
+                      marginBottom: "15px",
+                      padding: "10px",
+                      backgroundColor: "#f8f9fa",
+                      borderRadius: "5px",
+                      fontSize: "12px"
+                    }}>
+                      {feature.breed && (
+                        <p style={{ margin: "4px 0", color: "#666" }}>
+                          <strong>Breed:</strong> {feature.breed}
+                        </p>
+                      )}
+                      {feature.pricePerUnit && (
+                        <p style={{ margin: "4px 0", color: "#666" }}>
+                          <strong>Price:</strong> ${typeof feature.pricePerUnit === 'number' ? feature.pricePerUnit.toFixed(2) : feature.pricePerUnit}
+                        </p>
+                      )}
+                      {feature.date && (
+                        <p style={{ margin: "4px 0", color: "#666" }}>
+                          <strong>Date:</strong> {typeof feature.date === 'string' ? feature.date : new Date(feature.date).toLocaleDateString()}
+                        </p>
+                      )}
+                    </div>
+                  )}
 
                   {/* Actions */}
                   <div style={{
@@ -486,6 +544,92 @@ function FeatureManagement() {
                     ✓ Image uploaded successfully
                   </p>
                 )}
+              </div>
+
+              {/* Chicken Rate Fields */}
+              <div style={{ marginBottom: "20px", paddingTop: "20px", borderTop: "1px solid #ddd" }}>
+                <h4 style={{ margin: "0 0 15px 0", color: "#333", fontSize: "16px" }}>
+                  Chicken Rate Information
+                </h4>
+                
+                {/* Breed */}
+                <div style={{ marginBottom: "15px" }}>
+                  <label style={{
+                    display: "block",
+                    marginBottom: "8px",
+                    fontWeight: "600",
+                    color: "#333"
+                  }}>
+                    Breed
+                  </label>
+                  <input
+                    type="text"
+                    name="breed"
+                    value={formData.breed}
+                    onChange={handleInputChange}
+                    placeholder="e.g., Broiler, Layer, etc."
+                    style={{
+                      width: "100%",
+                      padding: "10px",
+                      borderRadius: "5px",
+                      border: "1px solid #ddd",
+                      fontSize: "14px"
+                    }}
+                  />
+                </div>
+
+                {/* Price Per Unit */}
+                <div style={{ marginBottom: "15px" }}>
+                  <label style={{
+                    display: "block",
+                    marginBottom: "8px",
+                    fontWeight: "600",
+                    color: "#333"
+                  }}>
+                    Price Per Unit ($)
+                  </label>
+                  <input
+                    type="number"
+                    name="pricePerUnit"
+                    value={formData.pricePerUnit}
+                    onChange={handleInputChange}
+                    placeholder="e.g., 5.50"
+                    step="0.01"
+                    min="0"
+                    style={{
+                      width: "100%",
+                      padding: "10px",
+                      borderRadius: "5px",
+                      border: "1px solid #ddd",
+                      fontSize: "14px"
+                    }}
+                  />
+                </div>
+
+                {/* Date */}
+                <div style={{ marginBottom: "15px" }}>
+                  <label style={{
+                    display: "block",
+                    marginBottom: "8px",
+                    fontWeight: "600",
+                    color: "#333"
+                  }}>
+                    Date
+                  </label>
+                  <input
+                    type="date"
+                    name="date"
+                    value={formData.date}
+                    onChange={handleInputChange}
+                    style={{
+                      width: "100%",
+                      padding: "10px",
+                      borderRadius: "5px",
+                      border: "1px solid #ddd",
+                      fontSize: "14px"
+                    }}
+                  />
+                </div>
               </div>
 
               {/* Form Actions */}
