@@ -38,6 +38,10 @@ import FeatureManagement from "./pages/FeatureManagement";
 // Other Expenses
 import OtherExpenses from "./pages/OtherExpenses";
 
+// Chat Management
+import ChatList from "./pages/ChatList";
+import ChatConversation from "./pages/ChatConversation";
+
 export default function App() {
   // get user from redux store
   const user = useSelector((state) => state.home.user);
@@ -79,6 +83,10 @@ export default function App() {
               
               {/* Feature Management */}
               <Route path="/FeatureManagement" element={<FeatureManagement />} />
+              
+              {/* Chat Management */}
+              <Route path="/chat" element={<ChatList />} />
+              <Route path="/chat/:chatId" element={<ChatConversation />} />
               
             </Routes>
           </div>

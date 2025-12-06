@@ -1,4 +1,5 @@
 import React, { useState } from "react";
+import { Link } from "react-router-dom";
 import { RiDashboardHorizontalLine } from "react-icons/ri";
 import { FaPerson } from "react-icons/fa6";
 import { GiRoastChicken } from "react-icons/gi";
@@ -514,6 +515,33 @@ export default function Sidebar() {
             <GiMoneyStack size={20} style={{ marginRight: 12 }} />
             <span style={{ fontSize: "15px", fontWeight: "500" }}>Invoices</span>
           </a>
+        </li>
+
+        {/* Customer Chats */}
+        <li style={{ listStyleType: "none" }}>
+          <Link 
+            to="/chat" 
+            style={{ 
+              display: "flex",
+              alignItems: "center",
+              padding: "12px 20px",
+              color: "white",
+              textDecoration: "none",
+              transition: "all 0.3s ease",
+              borderRadius: "0 25px 25px 0",
+            }}
+            onMouseEnter={(e) => {
+              e.currentTarget.style.backgroundColor = "#34495e";
+              e.currentTarget.style.paddingLeft = "25px";
+            }}
+            onMouseLeave={(e) => {
+              e.currentTarget.style.backgroundColor = "transparent";
+              e.currentTarget.style.paddingLeft = "20px";
+            }}
+          >
+            <span style={{ fontSize: 20, marginRight: 12 }}>💬</span>
+            <span style={{ fontSize: "15px", fontWeight: "500" }}>Customer Chats</span>
+          </Link>
         </li>
 
         {/* Feature Management */}
