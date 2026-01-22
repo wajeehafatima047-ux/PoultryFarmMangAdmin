@@ -3,6 +3,9 @@ import { collection, addDoc, getDocs, query, orderBy, Timestamp, doc, updateDoc,
 import { db } from "../../firebase";
 import { toast } from "react-toastify";
 import "react-toastify/dist/ReactToastify.css";
+import { GiRoastChicken } from "react-icons/gi";
+import { CiShoppingCart } from "react-icons/ci";
+import { GiMoneyStack } from "react-icons/gi";
 
 function Orders() {
   const [orders, setOrders] = useState([]);
@@ -286,6 +289,40 @@ function Orders() {
 
   const statusOptions = ["Pending", "Approved", "Packed", "OutForDelivery", "Delivered"];
 
+  // Calculate order statistics
+  const calculateStats = () => {
+    const totalOrders = orders.length;
+    const totalChickensSold = orders.reduce((sum, order) => sum + (parseFloat(order.quantitySold) || 0), 0);
+    const totalRevenue = orders.reduce((sum, order) => sum + (parseFloat(order.totalAmount) || 0), 0);
+    const deliveredOrders = orders.filter(order => order.orderStatus === "Delivered").length;
+    const pendingOrders = orders.filter(order => order.orderStatus === "Pending").length;
+    const deliveredRevenue = orders
+      .filter(order => order.orderStatus === "Delivered")
+      .reduce((sum, order) => sum + (parseFloat(order.totalAmount) || 0), 0);
+    const averageOrderValue = totalOrders > 0 ? totalRevenue / totalOrders : 0;
+
+    return {
+      totalOrders,
+      totalChickensSold,
+      totalRevenue,
+      deliveredOrders,
+      pendingOrders,
+      deliveredRevenue,
+      averageOrderValue
+    };
+  };
+
+  const stats = calculateStats();
+
+  // Format currency
+  const formatCurrency = (amount) => {
+    return new Intl.NumberFormat('en-US', {
+      style: 'currency',
+      currency: 'USD',
+      minimumFractionDigits: 2
+    }).format(amount);
+  };
+
   return (
     <div style={{ padding: "20px" }}>
       <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 20 }}>
@@ -304,6 +341,116 @@ function Orders() {
         >
           {showForm ? "Cancel" : "Place New Order"}
         </button>
+      </div>
+
+      {/* Chicken Sale Statistics Box */}
+      <div style={{
+        display: "grid",
+        gridTemplateColumns: "repeat(auto-fit, minmax(200px, 1fr))",
+        gap: "20px",
+        marginBottom: "30px"
+      }}>
+        {/* Total Orders Card */}
+        <div style={{
+          backgroundColor: "whitesmoke",
+          borderRadius: "10px",
+          padding: "20px",
+          boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+            <p style={{ color: "grey", margin: 0, fontSize: "14px", fontWeight: "500" }}>Total Orders</p>
+            <span style={{ fontSize: "24px", color: "#007bff" }}>
+              <CiShoppingCart />
+            </span>
+          </div>
+          <h2 style={{ margin: "10px 0", color: "#333" }}>{stats.totalOrders}</h2>
+          <p style={{ color: "grey", fontSize: "12px", margin: 0 }}>All orders</p>
+        </div>
+
+        {/* Total Chickens Sold Card */}
+        <div style={{
+          backgroundColor: "whitesmoke",
+          borderRadius: "10px",
+          padding: "20px",
+          boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+            <p style={{ color: "grey", margin: 0, fontSize: "14px", fontWeight: "500" }}>Chickens Sold</p>
+            <span style={{ fontSize: "24px", color: "#ff9800" }}>
+              <GiRoastChicken />
+            </span>
+          </div>
+          <h2 style={{ margin: "10px 0", color: "#333" }}>{stats.totalChickensSold}</h2>
+          <p style={{ color: "grey", fontSize: "12px", margin: 0 }}>Total quantity</p>
+        </div>
+
+        {/* Total Revenue Card */}
+        <div style={{
+          backgroundColor: "whitesmoke",
+          borderRadius: "10px",
+          padding: "20px",
+          boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+            <p style={{ color: "grey", margin: 0, fontSize: "14px", fontWeight: "500" }}>Total Revenue</p>
+            <span style={{ fontSize: "24px", color: "#4caf50" }}>
+              <GiMoneyStack />
+            </span>
+          </div>
+          <h2 style={{ margin: "10px 0", color: "#4caf50", fontSize: "20px" }}>{formatCurrency(stats.totalRevenue)}</h2>
+          <p style={{ color: "grey", fontSize: "12px", margin: 0 }}>All orders</p>
+        </div>
+
+        {/* Delivered Orders Card */}
+        <div style={{
+          backgroundColor: "whitesmoke",
+          borderRadius: "10px",
+          padding: "20px",
+          boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+            <p style={{ color: "grey", margin: 0, fontSize: "14px", fontWeight: "500" }}>Delivered</p>
+            <span style={{ fontSize: "24px", color: "#4caf50" }}>
+              ✓
+            </span>
+          </div>
+          <h2 style={{ margin: "10px 0", color: "#4caf50" }}>{stats.deliveredOrders}</h2>
+          <p style={{ color: "grey", fontSize: "12px", margin: 0 }}>{formatCurrency(stats.deliveredRevenue)}</p>
+        </div>
+
+        {/* Pending Orders Card */}
+        <div style={{
+          backgroundColor: "whitesmoke",
+          borderRadius: "10px",
+          padding: "20px",
+          boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+            <p style={{ color: "grey", margin: 0, fontSize: "14px", fontWeight: "500" }}>Pending</p>
+            <span style={{ fontSize: "24px", color: "#ff9800" }}>
+              ⏳
+            </span>
+          </div>
+          <h2 style={{ margin: "10px 0", color: "#ff9800" }}>{stats.pendingOrders}</h2>
+          <p style={{ color: "grey", fontSize: "12px", margin: 0 }}>Awaiting processing</p>
+        </div>
+
+        {/* Average Order Value Card */}
+        <div style={{
+          backgroundColor: "whitesmoke",
+          borderRadius: "10px",
+          padding: "20px",
+          boxShadow: "0 2px 4px rgba(0,0,0,0.1)"
+        }}>
+          <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: "10px" }}>
+            <p style={{ color: "grey", margin: 0, fontSize: "14px", fontWeight: "500" }}>Avg Order Value</p>
+            <span style={{ fontSize: "24px", color: "#2196f3" }}>
+              📊
+            </span>
+          </div>
+          <h2 style={{ margin: "10px 0", color: "#2196f3", fontSize: "20px" }}>{formatCurrency(stats.averageOrderValue)}</h2>
+          <p style={{ color: "grey", fontSize: "12px", margin: 0 }}>Per order</p>
+        </div>
       </div>
 
       {showForm && (
